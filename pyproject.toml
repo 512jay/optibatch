@@ -1,0 +1,10 @@
+
+[project]
+name = "optibatch"
+version = "0.1.0"
+description = "Automate MT5 strategy optimization runs"
+authors = [{ name="Your Name", email="you@example.com" }]
+dependencies = []
+
+[tool.black]
+line-length = 88
