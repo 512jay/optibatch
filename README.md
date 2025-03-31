@@ -30,5 +30,43 @@ Designed for quant traders, analysts, and technical users who want to streamline
 git clone https://github.com/512jay/optibatch.git
 cd optibatch
 python -m venv env
-source env/bin/activate  # Windows: .\\env\\Scripts\\activate
+source env/bin/activate  # Windows: .\env\Scripts\activate
 pip install -r requirements.txt
+```
+
+Or use the provided bootstrap script:
+
+```bash
+./bootstrap.sh
+```
+
+---
+
+## 🧪 Run Tests
+
+```bash
+pytest
+```
+
+---
+
+## 📌 Roadmap
+
+- [x] Initial CLI scaffold
+- [ ] Add INI file builder
+- [ ] MT5 launcher with log monitor
+- [ ] Report parser and organizer
+- [ ] GUI with Tkinter (optional)
+- [ ] Integration with Fordis Ludus
+
+---
+
+## 🤝 Contributing
+
+Pull requests welcome! For major changes, open an issue first.
+
+---
+
+## 📄 License
+
+MIT License. See [`LICENSE`](LICENSE) file.
