@@ -1,0 +1,38 @@
+{
+  "metadata": {
+    "created_at": "2025-04-03T21:21:07.774307",
+    "report_types": [
+      "csv",
+      "html"
+    ]
+  },
+  "expert": {
+    "path": "Shared Projects\\IndyTSL\\IndyTSL.ex5",
+    "name": "IndyTSL"
+  },
+  "symbols": [
+    "EURUSD"
+  ],
+  "date": {
+    "start": "2024-01-01",
+    "end": "2025-01-01"
+  },
+  "forward": {
+    "mode": "NO"
+  },
+  "delays": 0,
+  "modelling": "Every tick",
+  "deposit": {
+    "amount": 10000.0,
+    "currency": "USD",
+    "leverage": "1:100"
+  },
+  "optimization": {
+    "mode": "disabled",
+    "result_priority": "balance max"
+  },
+  "custom_criteria": {
+    "profit_to_drawdown_ratio": 3.0
+  },
+  "strategy_input_parameters": {}
+}
