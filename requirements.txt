@@ -3,3 +3,5 @@ ruff
 mypy
 pytest
 requests
+pyautogui
+pytest-cov
