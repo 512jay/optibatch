@@ -79,7 +79,7 @@ def dump_symbols_via_mt5_auto(terminal_path_str: str, data_path_str: str) -> boo
     kill_mt5(str(terminal_path))
 
     # Step 4: Build .ini file
-    ini_dir = Path("optibach/temp")
+    ini_dir = Path("temp")
     ini_dir.mkdir(parents=True, exist_ok=True)
     ini_path = ini_dir / "dump_symbols.ini"
 

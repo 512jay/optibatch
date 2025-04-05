@@ -3,7 +3,7 @@
 name = "optibatch"
 version = "0.1.0"
 description = "Automate MT5 strategy optimization runs"
-authors = [{ name="Your Name", email="you@example.com" }]
+authors = [{ name="John Davis", email="512jay@gmail.com" }]
 dependencies = []
 
 [tool.black]

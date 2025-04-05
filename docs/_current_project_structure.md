@@ -2,12 +2,10 @@
 
 ```
 JedgeBot/
-│   ├── .coverage
 │   ├── Makefile
 │   ├── README.md
 │   ├── __init__.py
 │   ├── bootstrap.sh
-│   ├── config_gui.py
 │   ├── core
 │   │   ├── __init__.py
 │   │   ├── jobs
@@ -26,9 +24,6 @@ JedgeBot/
 │   │   │   ├── symbol_dumper.py
 │   │   │   ├── symbol_loader.py
 │   │   │   ├── tester_log_monitor.py
-│   │   ├── tools
-│   │   │   ├── __init__.py
-│   │   │   ├── ini_utils.py
 │   ├── docs
 │   │   ├── _current_project_structure.md
 │   ├── exports
@@ -58,9 +53,10 @@ JedgeBot/
 │   │   ├── job_20250405_001.json
 │   │   ├── job_20250405_002.json
 │   │   ├── job_20250405_003.json
+│   │   ├── job_20250405_004.json
+│   │   ├── job_20250405_005.json
+│   │   ├── job_20250405_006.json
 │   ├── main_app.py
-│   ├── optibach
-│   │   ├── cache
 │   ├── pyproject.toml
 │   ├── pytest.ini
 │   ├── requirements.txt
@@ -77,10 +73,10 @@ JedgeBot/
 │   │   │   ├── tools
 │   │   │   │   ├── __init__.py
 │   │   │   │   ├── test_log_utils.py
-│   │   ├── test_dummy.py
-│   │   ├── utils
+│   │   ├── ini_utils
 │   │   │   ├── __init__.py
 │   │   │   ├── test_ini_loader.py
+│   │   ├── test_dummy.py
 │   ├── ui
 │   │   ├── __init__.py
 │   │   ├── date_picker.py

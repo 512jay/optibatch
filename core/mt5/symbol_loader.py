@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from core.mt5.symbol_dumper import dump_symbols_via_mt5_auto
 
-CACHE_DIR = Path("optibach/cache")
+CACHE_DIR = Path("cache")
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 

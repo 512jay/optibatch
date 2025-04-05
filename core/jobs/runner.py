@@ -6,7 +6,7 @@ import subprocess
 
 from state.app_state import AppState
 from core.jobs.settings import load_settings
-from core.tools.ini_utils import generate_ini_files_from_job
+from ini_utils.formatter import generate_ini_files_from_job
 
 
 def resume_job(job_path: Path, terminal_path: Path):

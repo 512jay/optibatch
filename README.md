@@ -1,6 +1,6 @@
-# 🧠 Optibach
+# 🧠 Optibatch
 
-**Optibach** is a Python-based GUI tool that simplifies the automation of MT5 strategy optimization using `.ini` Tester configuration files. It enables users to configure, generate, and run backtests and optimizations — with support for multi-symbol strategies and batch management.
+**Optibatch** is a Python-based GUI tool that simplifies the automation of MT5 strategy optimization using `.ini` Tester configuration files. It enables users to configure, generate, and run backtests and optimizations — with support for multi-symbol strategies and batch management.
 
 ---
 

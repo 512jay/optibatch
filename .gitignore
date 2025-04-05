@@ -9,3 +9,22 @@ build/
 .env
 
 /cache/
+htmlcov/
+*.coverage
+.venv/
+
+
+*.cover
+*.log
+*.pot
+*.mo
+*.po
+*.db
+*.sqlite3
+*.egg
+*.egg-info/
+*.whl
+*.zip
+*.tar.gz
+*.tar.bz2
+*.tar.xz
