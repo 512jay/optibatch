@@ -1,21 +1,24 @@
 from dataclasses import dataclass, field
 from tkinter import StringVar
-from typing import Any
+from pathlib import Path
+
+REPORT_CLICK_PATH = Path("state") / "report_click.json"
 
 
-@dataclass
 class AppState:
-    expert_path_var: StringVar = field(default_factory=StringVar)
-    symbol_var: StringVar = field(default_factory=StringVar)
-    deposit_var: StringVar = field(default_factory=StringVar)
-    currency_var: StringVar = field(default_factory=StringVar)
-    leverage_var: StringVar = field(default_factory=StringVar)
-    report_var: StringVar = field(default_factory=lambda: StringVar(value="csv,html"))
-    optimization_mode_var: StringVar = field(default_factory=StringVar)
-    result_priority_var: StringVar = field(default_factory=StringVar)
-    forward_mode_var: StringVar = field(default_factory=StringVar)
-    fromdate_var: dict[str, StringVar] = field(default_factory=dict)
-    todate_var: dict[str, StringVar] = field(default_factory=dict)
-    forwarddate_var: dict[str, StringVar] = field(default_factory=dict)
-    status_var: StringVar = field(default_factory=StringVar)
-    parsed_strategy_inputs: dict[str, dict[str, Any]] = field(default_factory=dict)
+    def __init__(self):
+        self.expert_path_var = StringVar()
+        self.symbol_var = StringVar()
+        self.deposit_var = StringVar()
+        self.currency_var = StringVar()
+        self.leverage_var = StringVar()
+        self.report_var = StringVar(value="csv,html")
+        self.optimization_mode_var = StringVar()
+        self.result_priority_var = StringVar()
+        self.forward_mode_var = StringVar()
+        self.fromdate_var = {}
+        self.todate_var = {}
+        self.forwarddate_var = {}
+        self.status_var = StringVar()
+        self.parsed_strategy_inputs = {}
+        self.report_click_set: StringVar | None = None

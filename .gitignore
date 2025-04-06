@@ -12,7 +12,7 @@ build/
 htmlcov/
 *.coverage
 .venv/
-
+jobs/
 
 *.cover
 *.log

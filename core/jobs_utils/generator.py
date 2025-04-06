@@ -4,9 +4,9 @@ from pathlib import Path
 import json
 from tkinter import messagebox
 
-from core.jobs.validator import validate_config
-from core.jobs.runner import resume_job
-from core.jobs.settings import load_settings
+from core.jobs_utils.validator import validate_config
+from core.jobs_utils.runner import auto_resume_job
+from core.jobs_utils.settings import load_settings
 
 from helpers.enums import (
     optimization_options,
@@ -66,10 +66,11 @@ def run_optimization(state: AppState):
     with job_path.open("w") as f:
         json.dump(config, f, indent=2)
 
-    messagebox.showinfo("Saved", f"✅ Job config saved:\n{job_path}")
-    if messagebox.askyesno("Run Now?", "Resume this job now?"):
-        terminal_path = Path(load_settings().get("terminal_path", ""))
-        if terminal_path.exists():
-            resume_job(job_path, terminal_path)
-        else:
-            messagebox.showerror("Error", "Terminal path not found.")
+    # 🧠 Load terminal path from settings
+    settings = load_settings()
+    terminal_path = Path(settings.get("terminal_path", ""))
+    if not terminal_path.exists():
+        messagebox.showerror("Error", "Terminal path not found.")
+        return
+
+    auto_resume_job(job_path, terminal_path)

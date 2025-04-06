@@ -14,10 +14,10 @@ def generate_ini_files_from_job(job_path: Path) -> list[Path]:
     with job_path.open("r", encoding="utf-8") as f:
         config = json.load(f)
 
-    start_fmt = datetime.strptime(config["date"]["start"], "%Y-%m-%d").strftime(
+    start_fmt = datetime.strptime(config["date"]["start"], "%Y.%m.%d").strftime(
         "%Y%m%d"
     )
-    end_fmt = datetime.strptime(config["date"]["end"], "%Y-%m-%d").strftime("%Y%m%d")
+    end_fmt = datetime.strptime(config["date"]["end"], "%Y.%m.%d").strftime("%Y%m%d")
     expert_name = config["expert"]["name"]
     symbols = config["symbols"]
 

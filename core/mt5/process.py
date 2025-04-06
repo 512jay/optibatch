@@ -1,15 +1,22 @@
 import psutil
 from pathlib import Path
+from core.config import config
 
 
-def kill_mt5(target_path: str):
+def kill_mt5(target_path: str = None) -> None:
     """
     Silently kills only the MT5 terminal64.exe process that matches the full path.
 
     Args:
         target_path (str): Full path to terminal64.exe from settings.json
     """
-    target_path = str(Path(target_path).resolve()).lower()
+    if not target_path:
+        target_path = config.get("terminal_path")
+        if not target_path:
+            print("❌ No MT5 path provided and no terminal_path found in settings.json.")
+            return
+    else:
+        target_path = str(Path(target_path).resolve()).lower()
     killed = 0
 
     for proc in psutil.process_iter(["pid", "name", "exe"]):

@@ -6,9 +6,11 @@ JedgeBot/
 │   ├── README.md
 │   ├── __init__.py
 │   ├── bootstrap.sh
+│   ├── cache
+│   │   ├── symbols_6fee9933.json
 │   ├── core
 │   │   ├── __init__.py
-│   │   ├── jobs
+│   │   ├── jobs_utils
 │   │   │   ├── __init__.py
 │   │   │   ├── generator.py
 │   │   │   ├── runner.py
@@ -50,12 +52,28 @@ JedgeBot/
 │   │   ├── loader.py
 │   │   ├── writer.py
 │   ├── jobs
+│   │   ├── job_20250405_001
+│   │   │   ├── IndyTSL.EURUSD.H1.20250101_20250402.001.ini
 │   │   ├── job_20250405_001.json
 │   │   ├── job_20250405_002.json
 │   │   ├── job_20250405_003.json
 │   │   ├── job_20250405_004.json
 │   │   ├── job_20250405_005.json
 │   │   ├── job_20250405_006.json
+│   │   ├── job_20250405_007.json
+│   │   ├── job_20250405_008.json
+│   │   ├── job_20250405_009
+│   │   │   ├── IndyTSL.CHFJPY.H1.20250101_20250402.001.ini
+│   │   ├── job_20250405_009.json
+│   │   ├── job_20250405_010
+│   │   │   ├── IndyTSL.EURUSD.H1.20250102_20250402.001.ini
+│   │   ├── job_20250405_010.json
+│   │   ├── job_20250405_011
+│   │   │   ├── IndyTSL.AUDCAD.H1.20250102_20250402.001.ini
+│   │   │   ├── IndyTSL.AUDJPY.H1.20250102_20250402.002.ini
+│   │   │   ├── IndyTSL.EURCHF.H1.20250102_20250402.003.ini
+│   │   ├── job_20250405_011.json
+│   ├── logs
 │   ├── main_app.py
 │   ├── pyproject.toml
 │   ├── pytest.ini
