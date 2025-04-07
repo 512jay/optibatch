@@ -17,7 +17,7 @@ from core.logging.logger import logger
 from core.mt5.process import kill_mt5
 
 
-def run_and_monitor_optimization(ini_file: Path, terminal_path: Path):
+def run_and_monitor_optimization(ini_file: Path, terminal_path: Path, job_path: Path):
     logger.info(f"Launching optimization for: {ini_file.name}")
     process = subprocess.Popen([str(terminal_path), f"/config:{ini_file}"])
 
@@ -25,7 +25,8 @@ def run_and_monitor_optimization(ini_file: Path, terminal_path: Path):
         logger.info(f"Optimization complete: {ini_file.name}")
 
         logger.info("📤 Exporting optimization results...")
-        filename = export_mt5_results_to_xml(run_id=ini_file.stem)
+        job_json = job_path / f"{job_path.name}.json"
+        filename = export_mt5_results_to_xml(run_id=ini_file.stem, job_json_path=job_json)
 
         logger.info("Attempting to close MT5...")
         for proc in psutil.process_iter(["name"]):
@@ -52,7 +53,7 @@ def auto_resume_job(job_path: Path, terminal_path: Path):
     time.sleep(2) # Optional short delay for clean shutdown
 
     for ini in ini_files:
-        run_and_monitor_optimization(ini, terminal_path)
+        run_and_monitor_optimization(ini, terminal_path, job_path)
 
     logger.info("All optimizations completed.")
 

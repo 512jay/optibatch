@@ -1,13 +1,13 @@
 # File: main_app.py
 # Purpose: Main entry point for Optibach GUI app.
 
+import sys
 import tkinter as tk
 from tkinter import messagebox, filedialog, ttk
 from pathlib import Path
 from typing import Any
 import pyautogui
-import time
-
+import subprocess
 from core.config import config
 from core.logging.logger import logger
 from state.app_state import AppState
@@ -17,6 +17,8 @@ from ui.date_picker import create_ini_date_picker
 from core.jobs_utils.generator import run_optimization
 from core.jobs_utils.runner import pick_and_resume_job
 from ini_utils.loader import parse_ini_file, parse_tester_inputs_section
+from ui.mt5_scanner_ui import scan_and_select_mt5_install
+
 from helpers.enums import (
     optimization_options,
     result_priority_options,
@@ -32,6 +34,31 @@ state.report_click_set = tk.StringVar(value="Not Set")
 click = config.get("report_click")
 if click and "x" in click and "y" in click:
     state.report_click_set.set(f"Loaded ({click['x']}, {click['y']})")
+
+
+# Streamlit dashboard function
+def open_streamlit_dashboard():
+    # 🗂️ Open folder picker dialog
+    selected_folder = filedialog.askdirectory(title="Select folder of MT5 XML reports")
+    if not selected_folder:
+        return  # User cancelled
+
+    dashboard_path = Path("visualize_mt5.py").resolve()
+
+    # 🚀 Launch Streamlit with selected folder
+    subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "streamlit",
+            "run",
+            str(dashboard_path),
+            "--",
+            "--folder",
+            selected_folder,
+        ],
+        shell=True,
+    )
 
 
 # --- Set Report Click Point ---
@@ -150,7 +177,8 @@ forwarddate_frame.grid(row=forward_row + 1, column=0, columnspan=2, pady=5)
 
 
 def update_forward_visibility(*_):
-    if state.forward_mode_var.get().lower() == "custom":
+    value = state.forward_mode_var.get().lower()
+    if "custom" in value:
         forwarddate_frame.grid()
     else:
         forwarddate_frame.grid_remove()
@@ -228,28 +256,32 @@ def load_ini_ui(state: AppState) -> None:
 btn_row = forward_row + 2
 btns = [
     ("📂 Load INI", lambda: load_ini_ui(state), "e", 0),
-    ("🖱️ Set Report Click Point", lambda: set_report_click_location(), "e", 1),
-    ("📈 Pick Symbols", lambda: open_symbol_picker(root, state.symbol_var), "e", 2),
+    ("🖱️ Set Report Click Point", lambda: set_report_click_location(), "w", 0),
+    ("🔍 Scan for MT5", lambda: scan_and_select_mt5_install(), "e", 2),
+    ("📈 Pick Symbols", lambda: open_symbol_picker(root, state.symbol_var), "w", 2),
     (
         "🛠️ Edit Inputs",
         lambda: open_input_editor(root, state.parsed_strategy_inputs),
         "w",
-        2,
+        3,
     ),
     ("🔁 Resume Previous Job", lambda: pick_and_resume_job(), "e", 3),
-    ("▶️ Run Optimizations", lambda: run_optimization(state), "w", 3),
+    ("📊 Analyze Results", lambda: open_streamlit_dashboard(), "e", 4),
+    (
+        "▶️ Run Optimizations", lambda: run_optimization(state), "w", 4
+    ),
 ]
 
 for text, cmd, anchor, col in btns:
-    tk.Button(frame, text=text, command=cmd, width=22).grid(
+    tk.Button(frame, text=text, command=cmd, width=30).grid(
         row=btn_row + col, column=0 if anchor == "e" else 1, pady=5, sticky=anchor
     )
 
 tk.Label(frame, textvariable=state.report_click_set).grid(
-    row=btn_row + 4, column=0, columnspan=2, pady=2
+    row=btn_row + 5, column=0, columnspan=2, pady=2
 )
 
-status_bar = tk.Label(root, textvariable=state.status_var, anchor="w")
+status_bar = tk.Label(root, textvariable=state.status_var, anchor="e")
 status_bar.pack(fill="x", side="bottom")
 
 root.mainloop()

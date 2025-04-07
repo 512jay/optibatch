@@ -1,98 +1,102 @@
-# File: core/mt5/report_exporter.py
+# core/mt5/report_exporter.py
 
 import time
 import pyautogui
 import pygetwindow as gw
 from loguru import logger
+from pathlib import Path
 from core.config import config
+from core.jobs_utils.forward_utils import get_forward_split_date, is_forward_enabled
+from core.utils.io import read_utf16_file
 
 
-def close_auto_opened_report_window():
-    time.sleep(2)  # Give it a moment to open
+def focus_mt5_window():
+    logger.info("🔍 Looking for MT5 window using EA name...")
+
+    expert_path = config.get("terminal_path")  # Or wherever the EA path is stored
+    ea_name = (
+        Path(config.get("expert_path")).stem if config.get("expert_path") else "IndyTSL"
+    )
+
+    logger.debug(f"🔎 Searching for window containing EA name: {ea_name}")
 
     candidates = [
         w
         for w in gw.getAllWindows()
         if w.visible
-        and any(
-            phrase in w.title.lower()
-            for phrase in ("file://", "chrome", "edge", "notepad", ".xml")
-        )
+        and ea_name.lower() in w.title.lower()
+        and not w.title.lower().endswith(".xml")
     ]
 
     if not candidates:
-        logger.info("✅ No auto-opened report window to close.")
-        return
-
-    for w in candidates:
-        try:
-            logger.warning(f"🧹 Auto-closing window: {w.title}")
-            w.activate()
-            time.sleep(0.3)
-            pyautogui.hotkey("alt", "f4")
-            break
-        except Exception as e:
-            logger.error(f"⚠️ Failed to close window: {e}")
-
-
-def focus_mt5_window() -> bool:
-    logger.info("🔍 Looking for MT5 window...")
-
-    windows = gw.getAllWindows()
-    candidates = [
-        w
-        for w in windows
-        if w.visible
-        and "Deriv" in w.title
-        and ("Strategy Tester" in w.title or "IndyTSL" in w.title)
-    ]
-
-    if not candidates:
-        logger.warning("⚠️ MetaTrader 5 window not found!")
+        logger.warning("⚠️ MT5 window with EA name not found!")
         return False
 
-    mt5_window = candidates[0]
-    mt5_window.activate()
-    logger.success(f"🪟 Focused MT5 window: '{mt5_window.title}'")
+    win = candidates[0]
+    win.activate()
+    logger.success(f"🟢 Focused MT5 window: '{win.title}'")
+    time.sleep(1)
     return True
 
 
-def export_mt5_results_to_xml(run_id: str = None):
-    """Triggers MT5 right-click and Export to XML using saved coordinates."""
-    # 🔍 Get coordinates from config
-    click = config.get("report_click", {})
-    x = click.get("x")
-    y = click.get("y")
+def export_one_report(
+    run_id: str, x: int, y: int, suffix: str = "", press_count: int = 9
+):
+    full_id = f"{run_id}.{suffix}" if suffix else run_id
+    logger.info(f"🧾 Saving report: {full_id}.xml")
 
-    if x is None or y is None:
-        logger.error("❌ Report click coordinates not set in settings.json.")
-        return
-
-    logger.info(f"📤 Exporting MT5 results to XML using point ({x}, {y})")
-
-    if not focus_mt5_window():
-        return
-
-    # 🖱️ Right-click report area
     pyautogui.moveTo(x, y, duration=0.5)
     pyautogui.rightClick()
-    time.sleep(0.6)
+    time.sleep(0.5)
 
-    # ⬇ Navigate to "Export to XML"
-    for _ in range(9):
+    logger.info(f"Press count: {press_count}")
+    for _ in range(press_count):
         pyautogui.press("down")
-        time.sleep(0.1)
     pyautogui.press("enter")
 
-    time.sleep(2)
-
-    # 📝 Type custom filename if provided
-    if run_id:
-        pyautogui.write(run_id)
-        pyautogui.press("enter")
-        logger.success(f"✅ Report saved as: {run_id}.xml")
-    else:
-        logger.info("🗂️ Saved with default filename.")
+    time.sleep(1.5)
+    pyautogui.write(full_id)
+    pyautogui.press("enter")
     time.sleep(1)
-    # 🧹 Close any auto-opened report window
+
     close_auto_opened_report_window()
+    logger.success(f"✅ Report saved: {full_id}.xml")
+
+
+def close_auto_opened_report_window():
+    for win in gw.getWindowsWithTitle(".xml"):
+        if win.visible:
+            win.close()
+            time.sleep(0.5)
+
+
+def export_mt5_results_to_xml(run_id: str, job_json_path: Path):
+    logger.info("🔄 Exporting MT5 results to XML...")
+
+    forward_enabled = is_forward_enabled(job_json_path)
+
+    presses_to_report = 10 if is_forward else 9
+
+    report_click = config.get("report_click")
+    x, y = report_click["x"], report_click["y"]
+    logger.info(f"📤 Exporting MT5 results to XML using point ({x}, {y})")
+
+    focus_mt5_window()
+    export_one_report(run_id, x, y, suffix="opt", press_count=presses_to_report)
+    time.sleep(0.5)
+    close_auto_opened_report_window()
+    time.sleep(0.5)
+
+    if forward_enabled:
+        logger.info("🔄 Exporting forward test results...")
+        focus_mt5_window()
+        pyautogui.press("down")  # switch to forward test result
+        # pyautogui.press("down")
+        pyautogui.press("enter")
+        time.sleep(0.2)
+        export_one_report(run_id, x, y, suffix="fwd", press_count=presses_to_report)
+        time.sleep(0.5)
+        close_auto_opened_report_window()
+        time.sleep(0.5)
+
+    logger.info("✅ All reports exported successfully.")
