@@ -9,10 +9,11 @@ from core.jobs_utils.runner import auto_resume_job
 from core.jobs_utils.settings import load_settings
 
 from helpers.enums import (
-    optimization_options,
-    result_priority_options,
+    optimization_mode_map,
+    result_priority_map,
     forward_mode_map,
 )
+
 from helpers.path_utils import get_next_job_path
 
 from ui.date_picker import assemble_ini_date
@@ -32,7 +33,6 @@ def run_optimization(state: AppState):
         "label": label,
         "metadata": {
             "created_at": datetime.now().isoformat(),
-            "report_types": state.report_var.get().split(","),
         },
         "expert": {
             "path": state.expert_path_var.get(),
@@ -53,8 +53,8 @@ def run_optimization(state: AppState):
             "leverage": f"1:{state.leverage_var.get()}",
         },
         "optimization": {
-            "mode": optimization_options[state.optimization_mode_var.get()],
-            "result_priority": result_priority_options[state.result_priority_var.get()],
+            "mode": optimization_mode_map[state.optimization_mode_var.get()],
+            "result_priority": result_priority_map[state.result_priority_var.get()],
         },
         "strategy_input_parameters": {},  # Filled externally
     }

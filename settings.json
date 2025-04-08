@@ -1,8 +1,80 @@
 {
+  "Expert": "Shared Projects\\IndyTSL\\IndyTSL.ex5",
+  "Symbol": "AUDCHFmicro",
+  "Deposit": "10000",
+  "Currency": "USD",
+  "Leverage": "100",
+  "Optimization": 1,
+  "OptimizationCriterion": 0,
+  "ForwardMode": 0,
+  "FromDate": "2025.4.7",
+  "ToDate": "2025.4.7",
+  "ForwardDate": "2025.4.7",
   "terminal_path": "C:\\Program Files\\deriv\\MetaTrader 5 Terminal\\terminal64.exe",
   "data_path": "C:\\Users\\512ja\\AppData\\Roaming\\MetaQuotes\\Terminal\\82E5D0ED1654130E7B3106ADBDDCB073",
   "report_click": {
-    "x": 4699,
-    "y": -1033
+    "x": 4733,
+    "y": -995
+  },
+  "last_settings": {
+    "expert_path": "Shared Projects\\IndyTSL\\IndyTSL.ex5",
+    "symbols": "USDZAR",
+    "from_date": "2025.01.01",
+    "to_date": "2025.04.02",
+    "forward_mode": "NO",
+    "forward_date": "..",
+    "optimization_mode": "Slow (complete algorithm)",
+    "result_priority": "Balance Max",
+    "strategy_inputs": {
+      "input_initialOrderType": {
+        "default": 0.0,
+        "start": 0.0,
+        "step": 0.0,
+        "end": 8.0,
+        "optimize": false
+      },
+      "input_LongStopLossPercent": {
+        "default": 0.2,
+        "start": 0.2,
+        "step": 0.02,
+        "end": 2.0,
+        "optimize": true
+      },
+      "input_ShortStopLossPercent": {
+        "default": 0.2,
+        "start": 0.2,
+        "step": 0.02,
+        "end": 2.0,
+        "optimize": true
+      },
+      "input_LongTakeProfitPercent": {
+        "default": 0.0,
+        "start": 0.0,
+        "step": 0.0,
+        "end": 0.0,
+        "optimize": false
+      },
+      "input_ShortTakeProfitPercent": {
+        "default": 0.0,
+        "start": 0.0,
+        "step": 0.0,
+        "end": 0.0,
+        "optimize": false
+      },
+      "input_lotSize": {
+        "default": 0.1,
+        "start": 0.1,
+        "step": 0.01,
+        "end": 1.0,
+        "optimize": false
+      },
+      "input_magicNumber": {
+        "default": 123456.0,
+        "start": 123456.0,
+        "step": 1.0,
+        "end": 1234560.0,
+        "optimize": false
+      }
+    }
   }
 }

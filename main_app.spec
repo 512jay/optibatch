@@ -1,47 +1,45 @@
-# File: main_app.spec
+# -*- mode: python ; coding: utf-8 -*-
 
-from PyInstaller.utils.hooks import collect_submodules
-from pathlib import Path
-import json
-
-# Project root directory
-project_root = Path(".").resolve()
-
-# Additional non-code files (like settings.json)
-data_files = [
-    (str(project_root / "settings.json"), "settings.json"),
-]
-
-# Add your app entry script
 a = Analysis(
     ['main_app.py'],
-    pathex=[str(project_root)],
+    pathex=['.'],  # current folder as search path
     binaries=[],
-    datas=data_files,
-    hiddenimports=collect_submodules("core") + collect_submodules("state"),
+    datas=[
+        ('ui/symbols.txt', 'ui'),
+        ('README.txt', '.'),
+        ('core', 'core'),  # 👈 include the core package
+    ],
+    hiddenimports=[],
     hookspath=[],
+    hooksconfig={},
     runtime_hooks=[],
     excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=None,
+    noarchive=False,
+    optimize=0,
 )
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 
-# This block builds a console (terminal) version, so logs are visible
+pyz = PYZ(a.pure)
+
 exe = EXE(
     pyz,
     a.scripts,
     a.binaries,
-    a.zipfiles,
     a.datas,
-    name='OptibatchApp',
+    [],
+    name='OptiBatch',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=True,  # <- ✅ Shows log output in terminal window
-    icon=None,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=True,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon='robot.ico', 
 )
 

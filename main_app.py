@@ -20,10 +20,53 @@ from ini_utils.loader import parse_ini_file, parse_tester_inputs_section
 from ui.mt5_scanner_ui import scan_and_select_mt5_install
 
 from helpers.enums import (
-    optimization_options,
-    result_priority_options,
+    optimization_mode_map,
+    result_priority_map,
     forward_mode_map,
 )
+
+import json
+
+SETTINGS_FILE = Path("settings.json")
+
+
+def get_date_from_picker(picker_dict):
+    return f"{picker_dict['year'].get()}.{picker_dict['month'].get()}.{picker_dict['day'].get()}"
+
+
+report_click = config.get("report_click", {"x": 0, "y": 0})
+def load_last_settings():
+    if SETTINGS_FILE.exists():
+
+        try:
+            with open(SETTINGS_FILE, encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            logger.warning(f"Failed to load settings.json: {e}")
+    return {}
+
+
+def save_current_settings():
+    # Load existing settings to avoid overwriting
+    existing = config.get("last_settings") or {}
+
+    # Extract values from UI state
+    settings_to_save = {
+        "expert_path": state.expert_path_var.get(),
+        "symbols": state.symbol_var.get(),
+        "from_date": get_date_from_picker(state.fromdate_var),
+        "to_date": get_date_from_picker(state.todate_var),
+        "forward_mode": state.forward_mode_var.get(),
+        "forward_date": get_date_from_picker(state.forwarddate_var),
+        "optimization_mode": state.optimization_mode_var.get(),
+        "result_priority": state.result_priority_var.get(),
+        "strategy_inputs": state.parsed_strategy_inputs,
+    }
+
+    # Merge existing with new settings
+    updated = {**existing, **settings_to_save}
+    config.set("last_settings", updated)
+
 
 root = tk.Tk()
 root.title("Optibatch Main Interface")
@@ -34,6 +77,61 @@ state.report_click_set = tk.StringVar(value="Not Set")
 click = config.get("report_click")
 if click and "x" in click and "y" in click:
     state.report_click_set.set(f"Loaded ({click['x']}, {click['y']})")
+
+last = load_last_settings()
+
+state.expert_path_var.set(last.get("Expert", ""))
+state.symbol_var.set(last.get("Symbol", ""))
+state.deposit_var.set(last.get("Deposit", "10000"))
+state.currency_var.set(last.get("Currency", "USD"))
+state.leverage_var.set(last.get("Leverage", "100"))
+
+state.optimization_mode_var.set(
+    next(
+        (
+            k
+            for k, v in optimization_mode_map.items()
+            if str(v) == str(last.get("Optimization", 2))
+        ),
+        "Fast (genetic based algorithm)",
+    )
+)
+state.result_priority_var.set(
+    next(
+        (
+            k
+            for k, v in result_priority_map.items()
+            if str(v) == str(last.get("OptimizationCriterion", 0))
+        ),
+        "Balance Max",
+    )
+)
+state.forward_mode_var.set(
+    next(
+        (
+            k
+            for k, v in forward_mode_map.items()
+            if str(v) == str(last.get("ForwardMode", 0))
+        ),
+        "NO",
+    )
+)
+
+
+# Restore dates
+def populate_date(picker, date_str):
+    try:
+        y, m, d = date_str.split(".")
+        picker["year"].set(y)
+        picker["month"].set(m)
+        picker["day"].set(d)
+    except Exception as e:
+        logger.warning(f"Could not populate date: {e}")
+
+
+populate_date(state.fromdate_var, last.get("FromDate", ""))
+populate_date(state.todate_var, last.get("ToDate", ""))
+populate_date(state.forwarddate_var, last.get("ForwardDate", ""))
 
 
 # Streamlit dashboard function
@@ -132,7 +230,6 @@ fields = [
     ("Deposit", state.deposit_var),
     ("Currency", state.currency_var),
     ("Leverage", state.leverage_var),
-    ("Report Types (csv,html)", state.report_var),
 ]
 
 for i, (label_text, var) in enumerate(fields):
@@ -145,7 +242,7 @@ tk.Label(frame, text="Optimization Mode").grid(row=opt_row, column=0, sticky="e"
 ttk.Combobox(
     frame,
     textvariable=state.optimization_mode_var,
-    values=list(optimization_options.keys()),
+    values=list(optimization_mode_map.keys()),
     width=35,
 ).grid(row=opt_row, column=1, sticky="w")
 
@@ -153,7 +250,7 @@ tk.Label(frame, text="Result Priority").grid(row=opt_row + 1, column=0, sticky="
 ttk.Combobox(
     frame,
     textvariable=state.result_priority_var,
-    values=list(result_priority_options.keys()),
+    values=list(result_priority_map.keys()),
     width=35,
 ).grid(row=opt_row + 1, column=1, sticky="w")
 
@@ -195,30 +292,34 @@ def load_ini_ui(state: AppState) -> None:
         return
     data = parse_ini_file(file_path)
     state.expert_path_var.set(data.get("Expert", ""))
-    state.symbol_var.set(data.get("Symbol", ""))
-    state.deposit_var.set(data.get("Deposit", "10000"))
+    state.symbol_var.set(data.get("Symbol", "EURUSD"))
+    state.deposit_var.set(data.get("Deposit", "1000"))
     state.currency_var.set(data.get("Currency", "USD"))
     state.leverage_var.set(data.get("Leverage", "100"))
     state.optimization_mode_var.set(
         next(
             (
                 k
-                for k, v in optimization_options.items()
-                if str(v) == data.get("Optimization", "0")
+                for k, v in optimization_mode_map.items()
+                if str(v) == data.get("Optimization", "2")
             ),
-            "Disabled",
+            "Fast (genetic based algorithm)",
         )
     )
+
+    # Set result priority with default = Balance Max
     state.result_priority_var.set(
         next(
             (
                 k
-                for k, v in result_priority_options.items()
+                for k, v in result_priority_map.items()
                 if str(v) == data.get("OptimizationCriterion", "0")
             ),
             "Balance Max",
         )
     )
+
+    # Set forward mode with default = NO
     state.forward_mode_var.set(
         next(
             (
@@ -226,10 +327,9 @@ def load_ini_ui(state: AppState) -> None:
                 for k, v in forward_mode_map.items()
                 if str(v) == data.get("ForwardMode", "0")
             ),
-            "No",
+            "NO",
         )
     )
-
     def populate_date(picker: dict[str, tk.StringVar], value: str) -> None:
         if value:
             try:
@@ -268,7 +368,10 @@ btns = [
     ("🔁 Resume Previous Job", lambda: pick_and_resume_job(), "e", 3),
     ("📊 Analyze Results", lambda: open_streamlit_dashboard(), "e", 4),
     (
-        "▶️ Run Optimizations", lambda: run_optimization(state), "w", 4
+        "▶️ Run Optimizations",
+        lambda: [save_current_settings(), run_optimization(state)],
+        "w",
+        4,
     ),
 ]
 

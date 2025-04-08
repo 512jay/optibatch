@@ -75,7 +75,7 @@ def export_mt5_results_to_xml(run_id: str, job_json_path: Path):
 
     forward_enabled = is_forward_enabled(job_json_path)
 
-    presses_to_report = 10 if is_forward else 9
+    presses_to_report = 10 if forward_enabled else 9
 
     report_click = config.get("report_click")
     x, y = report_click["x"], report_click["y"]

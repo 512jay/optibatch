@@ -12,7 +12,6 @@ class AppState:
         self.deposit_var = StringVar()
         self.currency_var = StringVar()
         self.leverage_var = StringVar()
-        self.report_var = StringVar(value="csv,html")
         self.optimization_mode_var = StringVar()
         self.result_priority_var = StringVar()
         self.forward_mode_var = StringVar()
