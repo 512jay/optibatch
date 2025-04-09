@@ -69,10 +69,18 @@ def generate_monthly_ini_files(
             ini_copy["Tester"]["FromDate"] = start.strftime("%Y.%m.%d")
             ini_copy["Tester"]["ToDate"] = end.strftime("%Y.%m.%d")
 
+            # Inject Report key just in case
+            ini_copy["Tester"][
+                "Report"
+            ] = f"{symbol}.{start.strftime('%Y%m%d')}_{end.strftime('%Y%m%d')}"
+
             name = f"{symbol}.{start.strftime('%Y%m%d')}_{end.strftime('%Y%m%d')}.ini"
             out_path = output_folder / name
             with out_path.open("w", encoding="utf-16") as f:
-                ini_copy.write(f)
+                for section in ini_copy.sections():
+                    f.write(f"[{section}]\n")
+                    for key, value in ini_copy[section].items():
+                        f.write(f"{key}={value}\n")
 
             generated_files.append(out_path)
 

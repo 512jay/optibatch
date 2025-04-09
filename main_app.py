@@ -10,24 +10,24 @@ import pyautogui
 import subprocess
 from core.config import config
 from core.logging.logger import logger
-from state.app_state import AppState
 from ui.symbol_picker import open_symbol_picker
 from ui.input_editor import open_input_editor
 from ui.date_picker import create_ini_date_picker
-from core.jobs_utils.generator import run_optimization
 from core.jobs_utils.runner import pick_and_resume_job
-from ini_utils.loader import parse_ini_file, parse_tester_inputs_section
 from ui.mt5_scanner_ui import scan_and_select_mt5_install
 from ui.mt5_menu import build_mt5_menu
 from dotenv import load_dotenv
-from helpers.enums import (
-    optimization_mode_map,
-    result_priority_map,
-    forward_mode_map,
-)
+from ui.ini_loader import load_ini_ui, try_load_cached_ini
 
 import json
 from core.registry import get_last_used_install
+from core.input_parser import InputParam
+from core.enums import (
+    OptimizationMode,
+    ResultPriority,
+    ForwardMode,
+    get_enum_label,)
+
 
 load_dotenv()
 SETTINGS_FILE = Path("settings.json")
@@ -39,37 +39,6 @@ def get_date_from_picker(picker_dict):
 
 
 report_click = config.get("report_click", {"x": 0, "y": 0})
-def load_last_settings():
-    if SETTINGS_FILE.exists():
-
-        try:
-            with open(SETTINGS_FILE, encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            logger.warning(f"Failed to load settings.json: {e}")
-    return {}
-
-
-def save_current_settings():
-    # Load existing settings to avoid overwriting
-    existing = config.get("last_settings") or {}
-
-    # Extract values from UI state
-    settings_to_save = {
-        "expert_path": state.expert_path_var.get(),
-        "symbols": state.symbol_var.get(),
-        "from_date": get_date_from_picker(state.fromdate_var),
-        "to_date": get_date_from_picker(state.todate_var),
-        "forward_mode": state.forward_mode_var.get(),
-        "forward_date": get_date_from_picker(state.forwarddate_var),
-        "optimization_mode": state.optimization_mode_var.get(),
-        "result_priority": state.result_priority_var.get(),
-        "strategy_inputs": state.parsed_strategy_inputs,
-    }
-
-    # Merge existing with new settings
-    updated = {**existing, **settings_to_save}
-    config.set("last_settings", updated)
 
 
 # --- GUI Setup ---
@@ -83,79 +52,42 @@ root.config(menu=menubar)
 
 
 # --- Application State ---
-state = AppState()
-state.report_click_set = tk.StringVar(value="Not Set")
+expert_path_var = tk.StringVar()
+symbol_var = tk.StringVar()
+deposit_var = tk.StringVar()
+currency_var = tk.StringVar()
+leverage_var = tk.StringVar()
+
+optimization_mode_var = tk.StringVar()
+result_priority_var = tk.StringVar()
+forward_mode_var = tk.StringVar()
+
+fromdate_var = {"year": tk.StringVar(), "month": tk.StringVar(), "day": tk.StringVar()}
+todate_var = {"year": tk.StringVar(), "month": tk.StringVar(), "day": tk.StringVar()}
+forwarddate_var = {
+    "year": tk.StringVar(),
+    "month": tk.StringVar(),
+    "day": tk.StringVar(),
+}
+
+report_click_set = tk.StringVar(value="Not Set")
+parsed_strategy_inputs: list[InputParam] = []
+status_var = tk.StringVar()
+
+
+report_click_set = tk.StringVar(value="Not Set")
 click = config.get("report_click")
 if click and "x" in click and "y" in click:
-    state.report_click_set.set(f"Loaded ({click['x']}, {click['y']})")
+    report_click_set.set(f"Loaded ({click['x']}, {click['y']})")
 
-# --- Load Last Settings ---
-last = load_last_settings()
-
-# --- Set Simple Vars ---
-state.expert_path_var.set(last.get("Expert", ""))
-state.symbol_var.set(last.get("Symbol", ""))
-state.deposit_var.set(last.get("Deposit", "10000"))
-state.currency_var.set(last.get("Currency", "USD"))
-state.leverage_var.set(last.get("Leverage", "100"))
-
-state.optimization_mode_var.set(
-    next(
-        (
-            k
-            for k, v in optimization_mode_map.items()
-            if str(v) == str(last.get("Optimization", 2))
-        ),
-        "Fast (genetic based algorithm)",
-    )
-)
-state.result_priority_var.set(
-    next(
-        (
-            k
-            for k, v in result_priority_map.items()
-            if str(v) == str(last.get("OptimizationCriterion", 0))
-        ),
-        "Balance Max",
-    )
-)
-state.forward_mode_var.set(
-    next(
-        (
-            k
-            for k, v in forward_mode_map.items()
-            if str(v) == str(last.get("ForwardMode", 0))
-        ),
-        "NO",
-    )
-)
 
 # --- Create Date Pickers ---
 frame = tk.Frame(root, padx=10, pady=10)
 frame.pack(fill="both", expand=True)
 
-from_frame, state.fromdate_var = create_ini_date_picker(frame, "FromDate")
-to_frame, state.todate_var = create_ini_date_picker(frame, "ToDate")
-forwarddate_frame, state.forwarddate_var = create_ini_date_picker(frame, "ForwardDate")
-
-
-# --- Restore Dates ---
-def populate_date(picker, date_str, required=True):
-    parts = date_str.split(".")
-    if len(parts) == 3:
-        y, m, d = parts
-        picker["year"].set(y)
-        picker["month"].set(m.zfill(2))
-        picker["day"].set(d.zfill(2))
-    elif required:
-        logger.warning(f"❗ Required date missing or invalid: '{date_str}'")
-    else:
-        logger.info(f"Skipping optional date: '{date_str}'")
-
-
-populate_date(state.fromdate_var, last.get("FromDate", ""))
-populate_date(state.todate_var, last.get("ToDate", ""))
-populate_date(state.forwarddate_var, last.get("ForwardDate", ""), required=False)
+from_frame, fromdate_var = create_ini_date_picker(frame, "FromDate")
+to_frame, todate_var = create_ini_date_picker(frame, "ToDate")
+forwarddate_frame, forwarddate_var = create_ini_date_picker(frame, "ForwardDate")
 
 
 # Streamlit dashboard function
@@ -237,7 +169,7 @@ def set_report_click_location():
     def capture_click_position():
         x, y = pyautogui.position()
         config.set("report_click", {"x": x, "y": y})
-        state.report_click_set.set(f"Set at ({x}, {y})")
+        report_click_set.set(f"Set at ({x}, {y})")
         logger.success(f"Click captured at ({x}, {y})")
         messagebox.showinfo("Click Saved", f"Click location set at ({x}, {y})")
 
@@ -249,11 +181,11 @@ frame = tk.Frame(root, padx=10, pady=10)
 frame.pack(fill="both", expand=True)
 
 fields = [
-    ("Expert Path", state.expert_path_var),
-    ("Symbols (comma-separated)", state.symbol_var),
-    ("Deposit", state.deposit_var),
-    ("Currency", state.currency_var),
-    ("Leverage", state.leverage_var),
+    ("Expert Path", expert_path_var),
+    ("Symbols (comma-separated)", symbol_var),
+    ("Deposit", deposit_var),
+    ("Currency", currency_var),
+    ("Leverage", leverage_var),
 ]
 
 for i, (label_text, var) in enumerate(fields):
@@ -265,127 +197,87 @@ opt_row = len(fields)
 tk.Label(frame, text="Optimization Mode").grid(row=opt_row, column=0, sticky="e")
 ttk.Combobox(
     frame,
-    textvariable=state.optimization_mode_var,
-    values=list(optimization_mode_map.keys()),
+    textvariable=optimization_mode_var,
+    values=[get_enum_label(OptimizationMode, e.value) for e in OptimizationMode],
     width=35,
 ).grid(row=opt_row, column=1, sticky="w")
 
 tk.Label(frame, text="Result Priority").grid(row=opt_row + 1, column=0, sticky="e")
 ttk.Combobox(
     frame,
-    textvariable=state.result_priority_var,
-    values=list(result_priority_map.keys()),
+    textvariable=result_priority_var,
+    values=[get_enum_label(ResultPriority, e.value) for e in ResultPriority],
     width=35,
 ).grid(row=opt_row + 1, column=1, sticky="w")
 
-from_frame, state.fromdate_var = create_ini_date_picker(frame, "FromDate")
-to_frame, state.todate_var = create_ini_date_picker(frame, "ToDate")
+from_frame, fromdate_var = create_ini_date_picker(frame, "FromDate")
+to_frame, todate_var = create_ini_date_picker(frame, "ToDate")
 from_frame.grid(row=opt_row + 2, column=0, columnspan=2, pady=5)
 to_frame.grid(row=opt_row + 3, column=0, columnspan=2, pady=5)
 
 forward_row = opt_row + 4
-tk.Label(frame, text="Forward Mode").grid(row=forward_row, column=0, sticky="e")
-forward_dropdown = ttk.Combobox(
+ttk.Combobox(
     frame,
-    textvariable=state.forward_mode_var,
-    values=list(forward_mode_map.keys()),
+    textvariable=forward_mode_var,
+    values=[get_enum_label(ForwardMode, e.value) for e in ForwardMode],
     width=20,
-)
-forward_dropdown.grid(row=forward_row, column=1, sticky="w")
+).grid(row=forward_row, column=1, sticky="w")
 
-forwarddate_frame, state.forwarddate_var = create_ini_date_picker(frame, "ForwardDate")
+forwarddate_frame, forwarddate_var = create_ini_date_picker(frame, "ForwardDate")
 forwarddate_frame.grid(row=forward_row + 1, column=0, columnspan=2, pady=5)
 
 
-def update_forward_visibility(*_):
-    value = state.forward_mode_var.get().lower()
-    if "custom" in value:
-        forwarddate_frame.grid()
-    else:
-        forwarddate_frame.grid_remove()
-
-
-forward_dropdown.bind("<<ComboboxSelected>>", update_forward_visibility)
-update_forward_visibility()
 
 
 # --- Load INI ---
-def load_ini_ui(state: AppState) -> None:
-    file_path = filedialog.askopenfilename(filetypes=[("INI Files", "*.ini")])
-    if not file_path:
-        return
-    data = parse_ini_file(file_path)
-    state.expert_path_var.set(data.get("Expert", ""))
-    state.symbol_var.set(data.get("Symbol", "EURUSD"))
-    state.deposit_var.set(data.get("Deposit", "1000"))
-    state.currency_var.set(data.get("Currency", "USD"))
-    state.leverage_var.set(data.get("Leverage", "100"))
-    state.optimization_mode_var.set(
-        next(
-            (
-                k
-                for k, v in optimization_mode_map.items()
-                if str(v) == data.get("Optimization", "2")
-            ),
-            "Fast (genetic based algorithm)",
-        )
-    )
+# Refactored version of load_ini_ui using session-based cache
 
-    # Set result priority with default = Balance Max
-    state.result_priority_var.set(
-        next(
-            (
-                k
-                for k, v in result_priority_map.items()
-                if str(v) == data.get("OptimizationCriterion", "0")
-            ),
-            "Balance Max",
-        )
-    )
-
-    # Set forward mode with default = NO
-    state.forward_mode_var.set(
-        next(
-            (
-                k
-                for k, v in forward_mode_map.items()
-                if str(v) == data.get("ForwardMode", "0")
-            ),
-            "NO",
-        )
-    )
-    def populate_date(picker: dict[str, tk.StringVar], value: str) -> None:
-        if value:
-            try:
-                y, m, d = value.split(".")
-                picker["year"].set(y)
-                picker["month"].set(m.zfill(2))
-                picker["day"].set(d.zfill(2))
-            except ValueError:
-                pass
-
-    populate_date(state.fromdate_var, data.get("FromDate", ""))
-    populate_date(state.todate_var, data.get("ToDate", ""))
-    if state.forward_mode_var.get().lower() == "custom":
-        populate_date(state.forwarddate_var, data.get("ForwardDate", ""))
-    else:
-        for part in state.forwarddate_var.values():
-            part.set("")
-
-    state.parsed_strategy_inputs = parse_tester_inputs_section(data.get("inputs", {}))
-    state.status_var.set(f"Loaded: {Path(file_path).name}")
+try_load_cached_ini(
+    expert_var=expert_path_var,
+    symbol_var=symbol_var,
+    deposit_var=deposit_var,
+    currency_var=currency_var,
+    leverage_var=leverage_var,
+    optimization_var=optimization_mode_var,
+    result_priority_var=result_priority_var,
+    forward_mode_var=forward_mode_var,
+    from_picker=fromdate_var,
+    to_picker=todate_var,
+    forward_picker=forwarddate_var,
+    parsed_inputs_holder=parsed_strategy_inputs,
+    status_var=status_var,
+)
 
 
 # --- Buttons ---
 btn_row = forward_row + 2
 btns = [
-    ("📂 Load INI", lambda: load_ini_ui(state), "e", 0),
+    (
+        "📂 Load INI",
+        lambda: load_ini_ui(
+            expert_var=expert_path_var,
+            symbol_var=symbol_var,
+            deposit_var=deposit_var,
+            currency_var=currency_var,
+            leverage_var=leverage_var,
+            optimization_var=optimization_mode_var,
+            result_priority_var=result_priority_var,
+            forward_mode_var=forward_mode_var,
+            from_picker=fromdate_var,
+            to_picker=todate_var,
+            forward_picker=forwarddate_var,
+            parsed_inputs_holder=parsed_strategy_inputs,
+            status_var=status_var,
+        ),
+        "e",
+        0,
+    ),
     ("🖱️ Set Report Click Point", lambda: set_report_click_location(), "w", 0),
     ("🔍 Scan for MT5", lambda: scan_and_select_mt5_install(), "e", 2),
-    ("📈 Pick Symbols", lambda: open_symbol_picker(root, state.symbol_var), "w", 2),
+    ("📈 Pick Symbols", lambda: open_symbol_picker(root, symbol_var), "w", 2),
     (
         "🛠️ Edit Inputs",
-        lambda: open_input_editor(root, state.parsed_strategy_inputs),
+        lambda: open_input_editor(root, parsed_strategy_inputs),
         "w",
         3,
     ),
@@ -393,7 +285,7 @@ btns = [
     ("📊 Analyze Results", lambda: open_streamlit_dashboard(), "e", 4),
     (
         "▶️ Run Optimizations",
-        lambda: [save_current_settings(), run_optimization(state)],
+        lambda: [],
         "w",
         4,
     ),
@@ -404,11 +296,11 @@ for text, cmd, anchor, col in btns:
         row=btn_row + col, column=0 if anchor == "e" else 1, pady=5, sticky=anchor
     )
 
-tk.Label(frame, textvariable=state.report_click_set).grid(
+tk.Label(frame, textvariable=report_click_set).grid(
     row=btn_row + 5, column=0, columnspan=2, pady=2
 )
 
-status_bar = tk.Label(root, textvariable=state.status_var, anchor="e")
+status_bar = tk.Label(root, textvariable=status_var, anchor="e")
 status_bar.pack(fill="x", side="bottom")
 
 root.mainloop()
