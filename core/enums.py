@@ -1,7 +1,12 @@
 # core/enums.py
 
 from enum import Enum, IntEnum
-from typing import Any, Type
+from typing import Any, Type, Protocol, runtime_checkable
+
+
+@runtime_checkable
+class LabeledEnum(Protocol):
+    label: str
 
 
 class ModelingMode(str, Enum):
@@ -153,10 +158,10 @@ class ProfitMode(IntEnum):
         return self.name.replace("_", " ").title()
 
 
-def get_enum_label(enum_class: Type[Enum], value: int | str) -> str:
+def get_enum_label(enum_class: Type[LabeledEnum], value: int | str) -> str:
     try:
-        return enum_class(value).label  # uses .label instead of .name
-    except ValueError:
+        return enum_class(value).label
+    except Exception:
         return f"Unknown ({value})"
 
 
