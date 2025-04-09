@@ -1,12 +1,10 @@
 # core/enums.py
 
 from enum import Enum, IntEnum
-from typing import Any, Type, Protocol, runtime_checkable
+from typing import Any, Type, TypeVar
+from loguru import logger
 
-
-@runtime_checkable
-class LabeledEnum(Protocol):
-    label: str
+TEnum = TypeVar("TEnum", bound=Enum)
 
 
 class ModelingMode(str, Enum):
@@ -158,10 +156,13 @@ class ProfitMode(IntEnum):
         return self.name.replace("_", " ").title()
 
 
-def get_enum_label(enum_class: Type[LabeledEnum], value: int | str) -> str:
+def get_enum_label(enum_class: Type[TEnum], value: int | str) -> str:
     try:
-        return enum_class(value).label
-    except Exception:
+        member = enum_class(value)
+        label = getattr(member, "label", None)
+        return label if label is not None else member.name
+    except (ValueError, TypeError) as e:
+        logger.warning(f"Invalid enum value '{value}' for {enum_class.__name__}: {e}")
         return f"Unknown ({value})"
 
 

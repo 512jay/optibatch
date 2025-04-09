@@ -16,7 +16,7 @@ from ui.widgets.status_inputs import build_status_bar, build_inputs_section
 from ui.actions.ini_buttons import build_ini_buttons
 from ui.mt5_menu import build_mt5_menu
 from ui.ini_loader import load_ini_and_update_ui
-from ui.helpers import update_fields_from_ini
+from ui.updaters import populate_ui_from_ini_data
 
 root = tk.Tk()
 root.title("Optibatch")
@@ -90,7 +90,7 @@ build_ini_buttons(
             lambda: load_ini_and_update_ui(
                 root,
                 parsed_strategy_inputs,
-                lambda data: update_fields_from_ini(
+                lambda data: populate_ui_from_ini_data(
                     data,
                     context={
                         "expert": expert_path_var,
