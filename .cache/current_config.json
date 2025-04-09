@@ -1,0 +1,28 @@
+{
+  "path": "C:\\Users\\512ja\\dev\\optibatch\\example.ini",
+  "tester": {
+    "Expert": "Shared Projects\\IndyTSL\\IndyTSL.ex5",
+    "Symbol": "EURUSD",
+    "Period": "H1",
+    "Optimization": "1",
+    "Model": "0",
+    "FromDate": "2025.01.01",
+    "ToDate": "2025.04.08",
+    "ForwardMode": "0",
+    "Deposit": "10000",
+    "Currency": "USD",
+    "ProfitInPips": "0",
+    "Leverage": "100",
+    "ExecutionMode": "0",
+    "OptimizationCriterion": "0"
+  },
+  "inputs": {
+    "input_initialOrderType": "0||0||0||8||N",
+    "input_LongStopLossPercent": "0.2||0.2||0.020000||2.000000||Y",
+    "input_ShortStopLossPercent": "0.2||0.2||0.020000||2.000000||Y",
+    "input_LongTakeProfitPercent": "0.0||0.0||0.000000||0.000000||N",
+    "input_ShortTakeProfitPercent": "0.0||0.0||0.000000||0.000000||N",
+    "input_lotSize": "0.1||0.1||0.010000||1.000000||N",
+    "input_magicNumber": "123456||123456||1||1234560||N"
+  }
+}
