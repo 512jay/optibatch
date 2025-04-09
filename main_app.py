@@ -18,7 +18,8 @@ from core.jobs_utils.generator import run_optimization
 from core.jobs_utils.runner import pick_and_resume_job
 from ini_utils.loader import parse_ini_file, parse_tester_inputs_section
 from ui.mt5_scanner_ui import scan_and_select_mt5_install
-
+from ui.mt5_menu import build_mt5_menu
+from dotenv import load_dotenv
 from helpers.enums import (
     optimization_mode_map,
     result_priority_map,
@@ -26,8 +27,11 @@ from helpers.enums import (
 )
 
 import json
+from core.registry import get_last_used_install
 
+load_dotenv()
 SETTINGS_FILE = Path("settings.json")
+selected_mt5_id = get_last_used_install()
 
 
 def get_date_from_picker(picker_dict):
@@ -68,18 +72,27 @@ def save_current_settings():
     config.set("last_settings", updated)
 
 
+# --- GUI Setup ---
 root = tk.Tk()
-root.title("Optibatch Main Interface")
+root.title("Optibatch Main Interface - [MT5 Install Name]")
 
-# Initialize application state
+# --- Top Menu Bar ---
+menubar = tk.Menu(root)
+build_mt5_menu(menubar, root, selected_mt5_id)
+root.config(menu=menubar)
+
+
+# --- Application State ---
 state = AppState()
 state.report_click_set = tk.StringVar(value="Not Set")
 click = config.get("report_click")
 if click and "x" in click and "y" in click:
     state.report_click_set.set(f"Loaded ({click['x']}, {click['y']})")
 
+# --- Load Last Settings ---
 last = load_last_settings()
 
+# --- Set Simple Vars ---
 state.expert_path_var.set(last.get("Expert", ""))
 state.symbol_var.set(last.get("Symbol", ""))
 state.deposit_var.set(last.get("Deposit", "10000"))
@@ -117,21 +130,32 @@ state.forward_mode_var.set(
     )
 )
 
+# --- Create Date Pickers ---
+frame = tk.Frame(root, padx=10, pady=10)
+frame.pack(fill="both", expand=True)
 
-# Restore dates
-def populate_date(picker, date_str):
-    try:
-        y, m, d = date_str.split(".")
+from_frame, state.fromdate_var = create_ini_date_picker(frame, "FromDate")
+to_frame, state.todate_var = create_ini_date_picker(frame, "ToDate")
+forwarddate_frame, state.forwarddate_var = create_ini_date_picker(frame, "ForwardDate")
+
+
+# --- Restore Dates ---
+def populate_date(picker, date_str, required=True):
+    parts = date_str.split(".")
+    if len(parts) == 3:
+        y, m, d = parts
         picker["year"].set(y)
-        picker["month"].set(m)
-        picker["day"].set(d)
-    except Exception as e:
-        logger.warning(f"Could not populate date: {e}")
+        picker["month"].set(m.zfill(2))
+        picker["day"].set(d.zfill(2))
+    elif required:
+        logger.warning(f"❗ Required date missing or invalid: '{date_str}'")
+    else:
+        logger.info(f"Skipping optional date: '{date_str}'")
 
 
 populate_date(state.fromdate_var, last.get("FromDate", ""))
 populate_date(state.todate_var, last.get("ToDate", ""))
-populate_date(state.forwarddate_var, last.get("ForwardDate", ""))
+populate_date(state.forwarddate_var, last.get("ForwardDate", ""), required=False)
 
 
 # Streamlit dashboard function

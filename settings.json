@@ -10,17 +10,17 @@
   "FromDate": "2025.4.7",
   "ToDate": "2025.4.7",
   "ForwardDate": "2025.4.7",
-  "terminal_path": "C:\\Program Files\\deriv\\MetaTrader 5 Terminal\\terminal64.exe",
-  "data_path": "C:\\Users\\512ja\\AppData\\Roaming\\MetaQuotes\\Terminal\\82E5D0ED1654130E7B3106ADBDDCB073",
+  "terminal_path": "C:\\MT5\\FOREX.com US\\terminal64.exe",
+  "data_path": "C:\\Users\\512ja\\AppData\\Roaming\\MetaQuotes\\Terminal\\36016A821D47D6047C5089850BCAA4D8",
   "report_click": {
     "x": 4733,
     "y": -995
   },
   "last_settings": {
     "expert_path": "Shared Projects\\IndyTSL\\IndyTSL.ex5",
-    "symbols": "USDZAR",
+    "symbols": "EURUSD",
     "from_date": "2025.01.01",
-    "to_date": "2025.04.02",
+    "to_date": "2025.04.08",
     "forward_mode": "NO",
     "forward_date": "..",
     "optimization_mode": "Slow (complete algorithm)",

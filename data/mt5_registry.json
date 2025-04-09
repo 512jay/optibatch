@@ -1,0 +1,17 @@
+{
+  "ForexUS": {
+    "path": "C:\\MT5\\FOREX.com US",
+    "label": "Forexus",
+    "geometry": {
+      "x": -32000,
+      "y": -32000,
+      "width": 391,
+      "height": 61
+    },
+    "click_position": [
+      3671,
+      -235
+    ]
+  },
+  "last_used": "ForexUS"
+}

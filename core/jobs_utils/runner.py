@@ -2,32 +2,42 @@
 
 from tkinter import filedialog, messagebox
 from pathlib import Path
-import json
 import subprocess
-import psutil
-import pyautogui
-from core.mt5.report_exporter import export_mt5_results_to_xml
 import time
+import psutil
 
-from state.app_state import AppState
+from core.mt5.report_exporter import export_mt5_results_to_xml
+from core.mt5.tester_log_monitor import wait_for_optimization_to_finish
+from core.mt5.process import kill_mt5
 from core.jobs_utils.settings import load_settings
 from ini_utils.formatter import generate_ini_files_from_job
-from core.mt5.tester_log_monitor import wait_for_optimization_to_finish
 from core.logging.logger import logger
-from core.mt5.process import kill_mt5
 
 
-def run_and_monitor_optimization(ini_file: Path, terminal_path: Path, job_path: Path):
+def run_and_monitor_optimization(ini_file: Path, terminal_path: Path, job_folder: Path):
+    """
+    Launches a single MT5 optimization, monitors it, exports results, then shuts down MT5.
+
+    Args:
+        ini_file (Path): The .ini config file to launch in MT5.
+        terminal_path (Path): Path to terminal64.exe for launching MT5.
+        job_folder (Path): Path to the folder where the job.json and XML reports should go.
+    """
     logger.info(f"Launching optimization for: {ini_file.name}")
+
+    # 🟢 Start MT5 with the provided config
     process = subprocess.Popen([str(terminal_path), f"/config:{ini_file}"])
 
+    # ⏳ Wait for the MT5 optimization to complete
     if wait_for_optimization_to_finish():
         logger.info(f"Optimization complete: {ini_file.name}")
 
         logger.info("📤 Exporting optimization results...")
-        job_json = job_path / f"{job_path.name}.json"
-        filename = export_mt5_results_to_xml(run_id=ini_file.stem, job_json_path=job_json)
 
+        # ✅ Export XML report(s) to the same folder as the job
+        export_mt5_results_to_xml(run_id=ini_file.stem, job_path=job_folder)
+
+        # 🔻 Attempt to close MT5 cleanly after export
         logger.info("Attempting to close MT5...")
         for proc in psutil.process_iter(["name"]):
             if proc.info["name"] and "terminal64.exe" in proc.info["name"].lower():
@@ -44,21 +54,40 @@ def run_and_monitor_optimization(ini_file: Path, terminal_path: Path, job_path: 
         logger.warning(f"Timeout while waiting on: {ini_file.name}")
 
 
-def auto_resume_job(job_path: Path, terminal_path: Path):
-    ini_files = generate_ini_files_from_job(job_path)
+def auto_resume_job(job_json_path: Path, terminal_path: Path):
+    """
+    Given a job JSON file, resume all optimization runs by:
+    - Generating all INI files from the job
+    - Running MT5 on each
+    - Exporting results to the job folder
+
+    Args:
+        job_json_path (Path): Path to a job JSON (e.g., jobs/job_20250407_004.json)
+        terminal_path (Path): Path to terminal64.exe
+    """
+    # 📂 Get the job folder: e.g., jobs/job_20250407_004/
+    job_folder = job_json_path.parent
+
+    # 🧠 Generate all the .ini files from the JSON spec
+    ini_files = generate_ini_files_from_job(job_json_path)
     logger.info(f"Preparing to run {len(ini_files)} optimization(s)")
 
-    # ✅ Ensure MT5 is closed before any run
+    # 🛑 Make sure MT5 isn't already running
     kill_mt5()
-    time.sleep(2) # Optional short delay for clean shutdown
+    time.sleep(2)  # Optional delay for full shutdown
 
+    # ▶️ Run each optimization and export results
     for ini in ini_files:
-        run_and_monitor_optimization(ini, terminal_path, job_path)
+        run_and_monitor_optimization(ini, terminal_path, job_folder)
 
     logger.info("All optimizations completed.")
 
 
 def pick_and_resume_job():
+    """
+    GUI helper to allow user to select a job JSON file from file picker,
+    and auto-resume it using MT5 and saved terminal path.
+    """
     file_path = filedialog.askopenfilename(
         filetypes=[("Job Config", "*.json")],
         initialdir="jobs",
