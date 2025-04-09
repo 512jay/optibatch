@@ -18,6 +18,7 @@ from ui.mt5_menu import build_mt5_menu
 from ui.ini_loader import load_ini_and_update_ui
 from ui.updaters import populate_ui_from_ini_data
 from ui.edit_inputs_popup import open_edit_inputs_popup
+from ui.startup_loader import load_cached_config_if_available
 
 root = tk.Tk()
 root.title("Optibatch")
@@ -116,6 +117,23 @@ build_ini_buttons(
         ("✏️ Edit Inputs", lambda: print("Edit Inputs"), "i", 2),
         ("📊 Pick Symbols", lambda: print("Pick Symbols"), "s", 2),
     ],
+)
+
+load_cached_config_if_available(
+    parsed_strategy_inputs,
+    context={
+        "expert": expert_path_var,
+        "symbol": symbol_var,
+        "deposit": deposit_var,
+        "currency": currency_var,
+        "leverage": leverage_var,
+        "modeling": strategy_model_var,
+        "optimization": optimization_mode_var,
+        "result": result_priority_var,
+        "forward": forward_mode_var,
+        "update_dates": update_dates,
+    },
+    root=root,  # for displaying toast
 )
 
 root.mainloop()
