@@ -24,10 +24,10 @@ def populate_ui_from_ini_data(data: dict, context: dict) -> None:
 
     ctx["modeling"].set(ModelingMode.from_value(str(tester.get("Model", 1))).label)
     ctx["optimization"].set(
-        OptimizationMode.from_value(str(tester.get("Optimization", 1))).name
+        OptimizationMode.from_value(str(tester.get("Optimization", 1))).label
     )
     ctx["result"].set(
-        ResultPriority.from_value(str(tester.get("OptimizationCriterion", 0))).name
+        ResultPriority.from_value(str(tester.get("OptimizationCriterion", 0))).label
     )
 
     ctx["forward"].set("No")

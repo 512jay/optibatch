@@ -17,6 +17,7 @@ from ui.actions.ini_buttons import build_ini_buttons
 from ui.mt5_menu import build_mt5_menu
 from ui.ini_loader import load_ini_and_update_ui
 from ui.updaters import populate_ui_from_ini_data
+from ui.edit_inputs_popup import open_edit_inputs_popup
 
 root = tk.Tk()
 root.title("Optibatch")
@@ -78,8 +79,11 @@ def update_dates(f: str, t: str) -> None:
 
 
 build_inputs_section(
-    inputs_frame, parsed_strategy_inputs, on_edit=lambda: print("Edit inputs")
+    inputs_frame,
+    parsed_strategy_inputs,
+    on_edit=lambda: open_edit_inputs_popup(parsed_strategy_inputs),
 )
+
 build_status_bar(status_frame, status_var)
 
 build_ini_buttons(

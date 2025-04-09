@@ -1,22 +1,24 @@
 # core/input_parser.py
 
-from typing import List, Dict, TypedDict
+from dataclasses import dataclass
+from typing import Optional, List, Dict
 
 
-class InputParam(TypedDict):
+@dataclass
+class InputParam:
     name: str
-    default: float
-    start: float
-    step: float
-    stop: float
-    optimize: bool
+    default: str
+    start: Optional[str] = None
+    step: Optional[str] = None
+    end: Optional[str] = None
+    optimize: bool = False
 
 
-def parse_ini_inputs(inputs_section: Dict[str, str]) -> List[Dict]:
+def parse_ini_inputs(inputs_section: Dict[str, str]) -> List[InputParam]:
     """
-    Parses [TesterInputs] section into a structured list of input dictionaries.
+    Parses [TesterInputs] section into a list of InputParam instances.
     """
-    results = []
+    results: List[InputParam] = []
 
     for name, line in inputs_section.items():
         parts = line.split("||")
@@ -24,18 +26,17 @@ def parse_ini_inputs(inputs_section: Dict[str, str]) -> List[Dict]:
             continue
 
         default, start, step, stop, flag = parts
-        try:
-            entry = {
-                "name": name,
-                "default": float(default),
-                "start": float(start),
-                "step": float(step),
-                "stop": float(stop),
-                "optimize": flag.upper() == "Y",
-            }
-            results.append(entry)
-        except ValueError:
-            # Skip invalid number formats silently
-            continue
+
+        # No type coercion here – we treat all as strings for consistency
+        results.append(
+            InputParam(
+                name=name,
+                default=default,
+                start=start or None,
+                step=step or None,
+                end=stop or None,
+                optimize=flag.strip().upper() == "Y",
+            )
+        )
 
     return results
