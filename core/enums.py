@@ -82,7 +82,12 @@ class OptimizationMode(IntEnum):
 
     @property
     def label(self) -> str:
-        return self.name.replace("_", " ").title()
+        return {
+            self.DISABLED: "Disabled",
+            self.SLOW: "Slow complete algorithm",
+            self.FAST: "Fast genetic based algorithm",
+            self.MARKET_WATCH: "All symbols selected in MarketWatch",
+        }[self]
 
     @classmethod
     def from_value(cls, value: str | int) -> "OptimizationMode":
