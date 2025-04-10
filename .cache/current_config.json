@@ -1,32 +1,23 @@
 {
-  "path": "C:\\Users\\512ja\\dev\\optibatch\\example.ini",
+  "path": ".cache\\current_config.ini",
   "tester": {
     "Expert": "Shared Projects\\IndyTSL\\IndyTSL.ex5",
     "Symbol": "EURUSD",
     "Period": "H1",
-    "Optimization": "1",
-    "Model": "0",
+    "Optimization": "Slow complete algorithm",
+    "Model": "Every tick",
     "FromDate": "2025.01.01",
     "ToDate": "2025.04.08",
-    "ForwardMode": "0",
+    "ForwardMode": "No",
     "Deposit": "10000",
     "Currency": "USD",
     "ProfitInPips": "0",
     "Leverage": "100",
     "ExecutionMode": "0",
-    "OptimizationCriterion": "0"
+    "OptimizationCriterion": "Balance Max"
   },
   "inputs": {
-    "input_initialOrderType": "0||0||0||8||N",
-    "input_LongStopLossPercent": "0.2||0.2||0.020000||2.000000||Y",
-    "input_ShortStopLossPercent": "0.2||0.2||0.020000||2.000000||Y",
-    "input_LongTakeProfitPercent": "0.0||0.0||0.000000||0.000000||N",
-    "input_ShortTakeProfitPercent": "0.0||0.0||0.000000||0.000000||N",
-    "input_lotSize": "0.1||0.1||0.010000||1.000000||N",
-    "input_magicNumber": "123456||123456||1||1234560||N"
-  },
-  "TesterInputs": [
-    {
+    "input_initialOrderType": {
       "name": "input_initialOrderType",
       "default": "0",
       "start": "0",
@@ -34,7 +25,7 @@
       "end": "8",
       "optimize": false
     },
-    {
+    "input_LongStopLossPercent": {
       "name": "input_LongStopLossPercent",
       "default": "0.2",
       "start": "0.2",
@@ -42,7 +33,7 @@
       "end": "2.000000",
       "optimize": true
     },
-    {
+    "input_ShortStopLossPercent": {
       "name": "input_ShortStopLossPercent",
       "default": "0.2",
       "start": "0.2",
@@ -50,23 +41,23 @@
       "end": "2.000000",
       "optimize": true
     },
-    {
+    "input_LongTakeProfitPercent": {
       "name": "input_LongTakeProfitPercent",
       "default": "0.0",
       "start": "0.0",
       "step": "0.000000",
       "end": "0.000000",
-      "optimize": true
+      "optimize": false
     },
-    {
+    "input_ShortTakeProfitPercent": {
       "name": "input_ShortTakeProfitPercent",
       "default": "0.0",
       "start": "0.0",
       "step": "0.000000",
       "end": "0.000000",
-      "optimize": true
+      "optimize": false
     },
-    {
+    "input_lotSize": {
       "name": "input_lotSize",
       "default": "0.1",
       "start": "0.1",
@@ -74,7 +65,7 @@
       "end": "1.000000",
       "optimize": false
     },
-    {
+    "input_magicNumber": {
       "name": "input_magicNumber",
       "default": "123456",
       "start": "123456",
@@ -82,5 +73,5 @@
       "end": "1234560",
       "optimize": false
     }
-  ]
+  }
 }

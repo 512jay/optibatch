@@ -115,5 +115,5 @@ def open_edit_inputs_popup(inputs: list[InputParam]) -> tk.Toplevel:
     button_frame = ttk.Frame(popup)
     button_frame.pack(fill="x", padx=10, pady=(0, 10))
 
-    ttk.Button(button_frame, text="Save", command=save_and_close).pack(side="right")
+    ttk.Button(button_frame, text="Modify", command=save_and_close).pack(side="right")
     return popup

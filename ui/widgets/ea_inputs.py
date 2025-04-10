@@ -13,5 +13,5 @@ def build_inputs_section(
     Adds only the Edit Inputs button to the frame.
     The actual input display is handled by optimized_preview.
     """
-    if on_edit:
-        ttk.Button(frame, text="Edit Inputs", command=on_edit).pack(pady=(5, 0))
+    # if on_edit:
+    #     ttk.Button(frame, text="Edit Inputs", command=on_edit).pack(pady=(5, 0))

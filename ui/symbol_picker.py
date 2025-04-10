@@ -6,7 +6,9 @@ from pathlib import Path
 from typing import Callable
 
 
-def open_symbol_picker(root: tk.Tk, on_symbols_picked: Callable[[str], None]) -> None:    
+def open_symbol_picker(
+    root: tk.Tk, on_symbols_picked: Callable[[str], None], preselected: str = ""
+) -> None:
     try:
         with open("settings.json") as f:
             mt5_info = json.load(f)
@@ -48,6 +50,11 @@ def open_symbol_picker(root: tk.Tk, on_symbols_picked: Callable[[str], None]) ->
 
     tk.Label(right_frame, text="Selected Symbols").pack()
     selected_listbox = Listbox(right_frame, width=35, height=20)
+    # Pre-populate right side with currently selected symbols
+    preselected_symbols = [s.strip() for s in preselected.split(",") if s.strip()]
+    for sym in preselected_symbols:
+        selected_listbox.insert(END, sym)
+
     selected_listbox.pack()
 
     def load_and_populate(force=False):
@@ -67,6 +74,11 @@ def open_symbol_picker(root: tk.Tk, on_symbols_picked: Callable[[str], None]) ->
         for symbol in all_symbols:
             listbox.insert(END, symbol)
 
+            # ✅ Highlight preselected items in the left list
+        for i, sym in enumerate(all_symbols):
+            if sym in preselected_symbols:
+                listbox.selection_set(i)
+
     def add_to_selected():
         for i in listbox.curselection():
             symbol = listbox.get(i)
@@ -77,6 +89,9 @@ def open_symbol_picker(root: tk.Tk, on_symbols_picked: Callable[[str], None]) ->
         selected = selected_listbox.curselection()
         for i in reversed(selected):  # Remove from bottom up
             selected_listbox.delete(i)
+
+    def clear_selected() -> None:
+        selected_listbox.delete(0, END)
 
 
     def save_selection() -> None:
@@ -94,6 +109,9 @@ def open_symbol_picker(root: tk.Tk, on_symbols_picked: Callable[[str], None]) ->
         side="left", padx=5
     )
     tk.Button(ctrl_frame, text="🔄 Refresh Symbols", command=refresh).pack(
+        side="left", padx=5
+    )
+    tk.Button(ctrl_frame, text="🧹 Clear Selected", command=clear_selected).pack(
         side="left", padx=5
     )
     tk.Button(ctrl_frame, text="➕ Add Selected", command=add_to_selected).pack(

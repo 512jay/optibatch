@@ -1,58 +1,74 @@
 # main_app.py
 
-from core.enums import get_enum_label
-from core.session import cache_ini_file, has_cached_ini, get_cached_ini_file
-from ini_utils.loader import parse_ini_file
-from core.input_parser import InputParam
-from core.input_parser import parse_ini_inputs
-from tkinter import filedialog, messagebox
-from pathlib import Path
+import json
 import tkinter as tk
-from tkinter import ttk
-from ini_utils.writer import update_ini_tester_inputs
-from core.session import update_json_tester_inputs
+from pathlib import Path
+from tkinter import filedialog, messagebox, ttk
 
-from ui.widgets.strategy_config import build_strategy_config
-from ui.widgets.date_fields import build_date_fields
-from ui.widgets.header_fields import build_header_fields
-from ui.widgets.ea_inputs import build_inputs_section
+from core.enums import get_enum_label, enum_label_map, get_value_for_label
+from core.input_parser import InputParam, parse_ini_inputs
+from core.session import (
+    cache_ini_file,
+    get_cached_ini_file,
+    has_cached_ini,
+    save_full_config,
+    update_json_tester_inputs,
+)
+from ini_utils.loader import parse_ini_file
+from ini_utils.writer import update_ini_tester_inputs
 from ui.actions.ini_buttons import build_ini_buttons
-from ui.mt5_menu import build_mt5_menu
-from ui.ini_loader import load_ini_and_update_ui
-from ui.updaters import populate_ui_from_ini_data
+from ui.config_loader import load_cached_ui_state
 from ui.edit_inputs_popup import open_edit_inputs_popup
-from ui.startup_loader import load_cached_config_if_available
+from ui.ini_loader import load_ini_and_update_ui
+from ui.mt5_menu import build_mt5_menu
+from ui.symbol_picker import open_symbol_picker
+from ui.updaters import populate_ui_from_ini_data
+from ui.widgets.date_fields import build_date_fields
+from ui.widgets.ea_inputs import build_inputs_section
+from ui.widgets.header_fields import build_header_fields
 from ui.widgets.optimized_preview import (
     create_optimized_preview_widget,
     update_optimized_preview,
 )
-import json
-from ui.symbol_picker import open_symbol_picker
+from ui.widgets.strategy_config import build_strategy_config
 
 
 def on_pick_symbol_clicked() -> None:
-    open_symbol_picker(root, update_symbol_field)
+    current = symbol_var.get()
+    open_symbol_picker(root, update_symbol_field, preselected=current)
 
 
 def update_symbol_field(new_symbol: str) -> None:
-    symbol_var.set(
-        new_symbol
-    ) 
+    symbol_var.set(new_symbol)
 
 
-def on_save_inputs():
-    cache_dir = Path(".cache")
-    ini_path = cache_dir / "current_config.ini"
-    json_path = cache_dir / "current_config.json"
-
-    update_ini_tester_inputs(ini_path, parsed_strategy_inputs)
-    update_json_tester_inputs(json_path, parsed_strategy_inputs)
-    show_toast("Inputs saved!")
+def on_save_inputs() -> None:
+    try:
+        save_full_config(
+            parsed_strategy_inputs,
+            {
+                "symbol": symbol_var.get(),
+                "deposit": deposit_var.get(),
+                "currency": currency_var.get(),
+                "leverage": leverage_var.get(),
+                "model": strategy_model_var.get(),
+                "optimization": optimization_mode_var.get(),
+                "result": result_priority_var.get(),
+                "forward": forward_mode_var.get(),
+                "from_date": f'{fromdate_var["year"].get()}.{fromdate_var["month"].get()}.{fromdate_var["day"].get()}',
+                "to_date": f'{todate_var["year"].get()}.{todate_var["month"].get()}.{todate_var["day"].get()}',
+            },
+        )
+        show_toast("Settings saved!")
+    except Exception as e:
+        messagebox.showerror("Error saving settings", str(e))
 
 
 root = tk.Tk()
 root.title("Optibatch")
 toast_label = None
+
+
 def show_toast(message: str, duration: int = 2000) -> None:
     global toast_label
 
@@ -105,9 +121,10 @@ parsed_strategy_inputs: list[InputParam] = []
 # Optimized preview widget
 optimized_preview = create_optimized_preview_widget(inputs_frame)
 optimized_preview.frame.pack(fill="x", padx=10, pady=(5, 0))
-ttk.Button(inputs_frame, text="💾 Save Inputs", command=on_save_inputs).pack(
+ttk.Button(inputs_frame, text="💾 Save Settings", command=on_save_inputs).pack(
     pady=(5, 0)
 )
+
 
 # Strategy settings
 strategy_vars = build_strategy_config(strategy_frame)
@@ -181,8 +198,12 @@ build_inputs_section(inputs_frame, on_edit=on_edit_inputs)
 
 
 # Layout: horizontally packed buttons
-ttk.Button(buttons_frame, text="📂 Load INI", command=on_load_ini).pack(side="left", padx=5)
-ttk.Button(buttons_frame, text="✏️ Edit Inputs", command=on_edit_inputs).pack(side="left", padx=5)
+ttk.Button(buttons_frame, text="📂 Load INI", command=on_load_ini).pack(
+    side="left", padx=5
+)
+ttk.Button(buttons_frame, text="✏️ Edit Inputs", command=on_edit_inputs).pack(
+    side="left", padx=5
+)
 ttk.Button(buttons_frame, text="📊 Pick Symbols", command=on_pick_symbol_clicked).pack(
     side="left", padx=5
 )
@@ -191,11 +212,15 @@ ttk.Button(
     text="⏭️ Continue Previous",
     command=lambda: print("Continue Previous"),
 ).pack(side="left", padx=10)
-ttk.Button(buttons_frame, text="🚀 Run Optimizations", command=lambda: print("Run Optimizations")).pack(side="left", padx=5)
+ttk.Button(
+    buttons_frame,
+    text="🚀 Run Optimizations",
+    command=lambda: print("Run Optimizations"),
+).pack(side="left", padx=5)
 
 
 # Load saved .ini if available
-load_cached_config_if_available(
+load_cached_ui_state(
     parsed_strategy_inputs,
     context={
         "expert": expert_path_var,

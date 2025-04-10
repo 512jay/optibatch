@@ -1,10 +1,11 @@
 # ui/startup_loader.py
 
-from pathlib import Path
-from core.loader import load_ini_file
-from core.input_parser import parse_ini_inputs
-from ui.updaters import populate_ui_from_ini_data
 import tkinter as tk
+from pathlib import Path
+
+from core.input_parser import parse_ini_inputs
+from core.loader import load_ini_file
+from ui.updaters import populate_ui_from_ini_data
 
 
 def show_timed_toast(root: tk.Tk, message: str, duration_ms: int = 3000) -> None:
@@ -15,31 +16,40 @@ def show_timed_toast(root: tk.Tk, message: str, duration_ms: int = 3000) -> None
     root.after(duration_ms, toast.destroy)
 
 
-def load_cached_config_if_available(
+from core.session import get_cached_ini_file, load_full_config
+
+
+def load_cached_ui_state(
     parsed_inputs: list,
     context: dict,
     root=None,
     on_inputs_loaded: callable = None,
 ) -> None:
-
-    """Load .cache/current_config.ini if it exists and update the UI."""
-    cached_path = Path(".cache/current_config.ini")
-    if not cached_path.exists():
+    ini_path = get_cached_ini_file()
+    if not ini_path.exists():
         return
 
     try:
-        ini_data = load_ini_file(cached_path)
-        parsed_inputs.clear()
-        parsed_inputs.extend(parse_ini_inputs(ini_data["inputs"]))
+        updated_context = load_full_config(parsed_inputs, ini_path)
+
+        # Push updates into existing StringVar context
+        for k, v in updated_context.items():
+            if k in context and hasattr(context[k], "set"):
+                context[k].set(v)
+
+        if context.get("update_dates"):
+            context["update_dates"](
+                updated_context["from_date"], updated_context["to_date"]
+            )
 
         if on_inputs_loaded:
             on_inputs_loaded()
 
-        populate_ui_from_ini_data(ini_data, context)
+        populate_ui_from_ini_data(load_ini_file(ini_path), context)
 
-        if root is not None:
+        if root:
             show_timed_toast(root, "✅ Loaded cached config.")
 
     except Exception as e:
-        if root is not None:
+        if root:
             show_timed_toast(root, f"⚠️ Failed to load cached config: {e}")
