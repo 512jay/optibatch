@@ -1,0 +1,63 @@
+{
+  "type": "object",
+  "required": ["path", "tester", "inputs", "meta"],
+  "properties": {
+    "path": { "type": "string" },
+    "tester": {
+      "type": "object",
+      "required": [
+        "Expert", "Symbol", "Deposit", "Currency", "Leverage",
+        "Model", "Optimization", "OptimizationCriterion",
+        "ForwardMode", "FromDate", "ToDate"
+      ],
+      "properties": {
+        "Expert": { "type": "string" },
+        "Symbol": { "type": "string" },
+        "Deposit": { "type": "string" },
+        "Currency": { "type": "string" },
+        "Leverage": { "type": "string" },
+        "Model": { "type": "string" },
+        "Optimization": { "type": "string" },
+        "OptimizationCriterion": { "type": "string" },
+        "ForwardMode": { "type": "string" },
+        "FromDate": { "type": "string" },
+        "ToDate": { "type": "string" }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "default": { "type": "string" },
+          "start": { "type": "string" },
+          "step": { "type": "string" },
+          "end": { "type": "string" },
+          "optimize": { "type": "boolean" }
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "required": ["saved_at", "created_by", "optibatch_version"],
+      "properties": {
+        "saved_at": { "type": "string", "format": "date-time" },
+        "created_by": { "type": "string", "const": "Optibatch" },
+        "optibatch_version": { "type": "string" }
+      }
+    },
+    "uistate": {
+      "type": "object",
+      "properties": {
+        "last_symbol_clicked": { "type": "string" },
+        "advanced_mode": { "type": "boolean" },
+        "last_opened_tab": { "type": "string" },
+        "from_date_validated": { "type": "boolean" },
+        "custom_forward_date": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -15,7 +15,7 @@ from core.session import (
     update_json_tester_inputs,
 )
 from ini_utils.loader import parse_ini_file
-from ini_utils.writer import update_ini_tester_inputs
+from core.session import update_ini_tester_inputs
 from ui.actions.ini_buttons import build_ini_buttons
 from ui.config_loader import load_cached_ui_state
 from ui.edit_inputs_popup import open_edit_inputs_popup
@@ -48,6 +48,7 @@ def on_save_inputs() -> None:
             parsed_strategy_inputs,
             {
                 "symbol": symbol_var.get(),
+                "timeframe": timeframe_var.get(),
                 "deposit": deposit_var.get(),
                 "currency": currency_var.get(),
                 "leverage": leverage_var.get(),
@@ -128,6 +129,7 @@ ttk.Button(inputs_frame, text="💾 Save Settings", command=on_save_inputs).pack
 
 # Strategy settings
 strategy_vars = build_strategy_config(strategy_frame)
+timeframe_var = strategy_vars["timeframe_var"]
 strategy_model_var = strategy_vars["strategy_model_var"]
 optimization_mode_var = strategy_vars["optimization_mode_var"]
 result_priority_var = strategy_vars["result_priority_var"]
@@ -176,6 +178,7 @@ def on_load_ini():
                 "deposit": deposit_var,
                 "currency": currency_var,
                 "leverage": leverage_var,
+                "timeframe": timeframe_var,
                 "modeling": strategy_model_var,
                 "optimization": optimization_mode_var,
                 "result": result_priority_var,
@@ -228,6 +231,7 @@ load_cached_ui_state(
         "deposit": deposit_var,
         "currency": currency_var,
         "leverage": leverage_var,
+        "timeframe": timeframe_var,
         "modeling": strategy_model_var,
         "optimization": optimization_mode_var,
         "result": result_priority_var,

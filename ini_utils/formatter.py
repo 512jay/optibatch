@@ -5,7 +5,7 @@ from datetime import datetime
 import json
 
 from helpers.path_utils import get_ini_output_dir  # Determines where .ini files go
-from ini_utils.writer import format_ini  # Builds the content of each .ini file
+from trash.writer import format_ini  # Builds the content of each .ini file
 
 
 def generate_ini_files_from_job(job_path: Path) -> list[Path]:

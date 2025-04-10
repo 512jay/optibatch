@@ -4,17 +4,17 @@
     "Expert": "Shared Projects\\IndyTSL\\IndyTSL.ex5",
     "Symbol": "EURUSD",
     "Period": "H1",
-    "Optimization": "Slow complete algorithm",
-    "Model": "Every tick",
+    "Optimization": 1,
+    "Model": "0",
     "FromDate": "2025.01.01",
     "ToDate": "2025.04.08",
-    "ForwardMode": "No",
+    "ForwardMode": 0,
     "Deposit": "10000",
     "Currency": "USD",
     "ProfitInPips": "0",
     "Leverage": "100",
     "ExecutionMode": "0",
-    "OptimizationCriterion": "Balance Max"
+    "OptimizationCriterion": 0
   },
   "inputs": {
     "input_initialOrderType": {
@@ -73,5 +73,6 @@
       "end": "1234560",
       "optimize": false
     }
-  }
+  },
+  "Period": "H1"
 }

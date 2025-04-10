@@ -11,6 +11,7 @@ JedgeBot/
 │   ├── __init__.py
 │   ├── bootstrap.sh
 │   ├── cache
+│   │   ├── symbols_241f1d24.json
 │   │   ├── symbols_6fee9933.json
 │   ├── check_controller.py
 │   ├── core
@@ -174,17 +175,18 @@ JedgeBot/
 │   │   │   ├── __init__.py
 │   │   │   ├── test_updaters.py
 │   ├── titles.py
+│   ├── trash
+│   │   ├── date_picker.py
 │   ├── ui
 │   │   ├── __init__.py
 │   │   ├── actions
 │   │   │   ├── ini_buttons.py
-│   │   ├── date_picker.py
+│   │   ├── config_loader.py
 │   │   ├── edit_inputs_popup.py
 │   │   ├── ini_loader.py
 │   │   ├── input_editor.py
 │   │   ├── mt5_menu.py
 │   │   ├── mt5_scanner_ui.py
-│   │   ├── startup_loader.py
 │   │   ├── symbol_picker.py
 │   │   ├── symbols.txt
 │   │   ├── updaters.py

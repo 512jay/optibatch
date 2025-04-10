@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from core.enums import OptimizationMode, ResultPriority, ModelingMode, ForwardMode
 from core.session import get_field, update_date_fields
 
@@ -8,15 +8,9 @@ def populate_ui_from_ini_data(data: dict, context: dict) -> None:
     tester = data.get("tester", {})
     ini_path = Path(data["path"])
 
-    # Resolve expert path
-    expert_raw = tester.get("Expert", "")
-    expert_resolved = (
-        str((ini_path.parent / expert_raw).resolve())
-        if not Path(expert_raw).is_absolute()
-        else expert_raw
-    )
-    ctx["expert"].set(expert_resolved)
-
+    expert_path = tester.get("Expert", "")
+    # Just display the path as-is from the INI file (already relative)
+    ctx["expert"].set(str(PureWindowsPath(expert_path)))
     ctx["symbol"].set(tester.get("Symbol", ""))
     ctx["deposit"].set(str(tester.get("Deposit", 10000)))
     ctx["currency"].set(tester.get("Currency", "USD"))

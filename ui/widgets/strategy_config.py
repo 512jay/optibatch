@@ -7,6 +7,7 @@ from core.enums import (
     ResultPriority,
     ForwardMode,
     ModelingMode,
+    Timeframe,
     get_enum_label,
 )
 
@@ -16,6 +17,7 @@ def build_strategy_config(frame: Misc):
     Create strategy configuration dropdowns for Model, Optimization Mode, Result Priority, and Forward Mode.
     Returns a dictionary of StringVar bindings.
     """
+    timeframe_var = tk.StringVar()
     strategy_model_var = tk.StringVar()
     optimization_mode_var = tk.StringVar()
     result_priority_var = tk.StringVar()
@@ -23,6 +25,14 @@ def build_strategy_config(frame: Misc):
 
     row = 0
 
+    ttk.Label(frame, text="Timeframe:").grid(row=row, column=0, sticky="e")
+    ttk.OptionMenu(
+        frame,
+        timeframe_var,
+        Timeframe.H1.label,
+        *[t.label for t in Timeframe]
+    ).grid(row=row, column=1, sticky="w")
+    row += 1  # advance row counter after dropdown
     ttk.Label(frame, text="Modeling Mode:").grid(row=row, column=0, sticky="e")
     ttk.Combobox(
         frame,
@@ -59,6 +69,7 @@ def build_strategy_config(frame: Misc):
     ).grid(row=row, column=1, sticky="w")
 
     return {
+        "timeframe_var": timeframe_var,  # ✅ Add this
         "strategy_model_var": strategy_model_var,
         "optimization_mode_var": optimization_mode_var,
         "result_priority_var": result_priority_var,
