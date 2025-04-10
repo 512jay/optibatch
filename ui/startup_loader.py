@@ -16,8 +16,12 @@ def show_timed_toast(root: tk.Tk, message: str, duration_ms: int = 3000) -> None
 
 
 def load_cached_config_if_available(
-    parsed_inputs: list, context: dict, root=None
+    parsed_inputs: list,
+    context: dict,
+    root=None,
+    on_inputs_loaded: callable = None,
 ) -> None:
+
     """Load .cache/current_config.ini if it exists and update the UI."""
     cached_path = Path(".cache/current_config.ini")
     if not cached_path.exists():
@@ -27,10 +31,15 @@ def load_cached_config_if_available(
         ini_data = load_ini_file(cached_path)
         parsed_inputs.clear()
         parsed_inputs.extend(parse_ini_inputs(ini_data["inputs"]))
+
+        if on_inputs_loaded:
+            on_inputs_loaded()
+
         populate_ui_from_ini_data(ini_data, context)
 
         if root is not None:
             show_timed_toast(root, "✅ Loaded cached config.")
+
     except Exception as e:
         if root is not None:
             show_timed_toast(root, f"⚠️ Failed to load cached config: {e}")

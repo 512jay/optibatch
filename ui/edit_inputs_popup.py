@@ -5,7 +5,7 @@ from tkinter import ttk
 from core.input_parser import InputParam
 
 
-def open_edit_inputs_popup(inputs: list[InputParam]) -> None:
+def open_edit_inputs_popup(inputs: list[InputParam]) -> tk.Toplevel:
     popup = tk.Toplevel()
     popup.title("Edit Strategy Inputs")
     popup.minsize(480,280)
@@ -116,3 +116,4 @@ def open_edit_inputs_popup(inputs: list[InputParam]) -> None:
     button_frame.pack(fill="x", padx=10, pady=(0, 10))
 
     ttk.Button(button_frame, text="Save", command=save_and_close).pack(side="right")
+    return popup

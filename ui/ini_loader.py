@@ -5,7 +5,9 @@ from core.session import cache_ini_file
 from core.input_parser import parse_ini_inputs
 
 
-def load_ini_and_update_ui(root, parsed_inputs_holder, update_fields_callback):
+def load_ini_and_update_ui(
+    root, parsed_inputs_holder, update_fields_callback, post_input_callback=None
+):
     file_path = filedialog.askopenfilename(
         title="Select INI File", filetypes=[("INI Files", "*.ini")]
     )
@@ -16,4 +18,8 @@ def load_ini_and_update_ui(root, parsed_inputs_holder, update_fields_callback):
     cache_ini_file(Path(file_path), data)
     parsed_inputs_holder.clear()
     parsed_inputs_holder.extend(parse_ini_inputs(data.get("inputs", {})))
+
     update_fields_callback(data)
+
+    if post_input_callback:
+        post_input_callback()
