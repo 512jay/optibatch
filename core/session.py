@@ -1,9 +1,26 @@
-from pathlib import Path
+# core/session.py
+
 import json
+from dataclasses import asdict
+from pathlib import Path
+from core.input_parser import InputParam
 
 CACHE_DIR = Path(".cache")
 CURRENT_INI = CACHE_DIR / "current_config.ini"
 CURRENT_INI_DATA = CACHE_DIR / "current_config.json"
+
+
+def update_json_tester_inputs(path: Path, inputs: list[InputParam]) -> None:
+    if not path.exists():
+        return
+
+    with path.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    data["TesterInputs"] = [asdict(param) for param in inputs]
+
+    with path.open("w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
 
 
 def cache_ini_file(src: Path, data: dict) -> None:

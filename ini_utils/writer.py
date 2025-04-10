@@ -1,7 +1,38 @@
-# File: utils/ini_writer.py
+# ini_utils/writer.py
 
+from core.input_parser import InputParam
 from pathlib import Path
-from datetime import datetime
+
+
+def update_ini_tester_inputs(path: Path, inputs: list[InputParam]) -> None:
+    if not path.exists():
+        return
+
+    lines = path.read_text(encoding="utf-16").splitlines()
+    output = []
+    in_section = False
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped == "[TesterInputs]":
+            output.append(line)
+            in_section = True
+            for param in inputs:
+                parts = [
+                    param.default,
+                    param.start or "",
+                    param.step or "",
+                    param.end or "",
+                    "Y" if param.optimize else "N",
+                ]
+                output.append(f"{param.name} = {'||'.join(parts)}")
+        elif in_section and stripped.startswith("[") and stripped.endswith("]"):
+            in_section = False
+            output.append(line)
+        elif not in_section:
+            output.append(line)
+
+    path.write_text("\n".join(output), encoding="utf-16", newline="\r\n")
 
 
 def format_ini(config: dict, symbol: str) -> str:

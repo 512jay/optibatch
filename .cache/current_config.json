@@ -24,5 +24,63 @@
     "input_ShortTakeProfitPercent": "0.0||0.0||0.000000||0.000000||N",
     "input_lotSize": "0.1||0.1||0.010000||1.000000||N",
     "input_magicNumber": "123456||123456||1||1234560||N"
-  }
+  },
+  "TesterInputs": [
+    {
+      "name": "input_initialOrderType",
+      "default": "0",
+      "start": "0",
+      "step": "0",
+      "end": "8",
+      "optimize": false
+    },
+    {
+      "name": "input_LongStopLossPercent",
+      "default": "0.2",
+      "start": "0.2",
+      "step": "0.020000",
+      "end": "2.000000",
+      "optimize": true
+    },
+    {
+      "name": "input_ShortStopLossPercent",
+      "default": "0.2",
+      "start": "0.2",
+      "step": "0.020000",
+      "end": "2.000000",
+      "optimize": true
+    },
+    {
+      "name": "input_LongTakeProfitPercent",
+      "default": "0.0",
+      "start": "0.0",
+      "step": "0.000000",
+      "end": "0.000000",
+      "optimize": true
+    },
+    {
+      "name": "input_ShortTakeProfitPercent",
+      "default": "0.0",
+      "start": "0.0",
+      "step": "0.000000",
+      "end": "0.000000",
+      "optimize": true
+    },
+    {
+      "name": "input_lotSize",
+      "default": "0.1",
+      "start": "0.1",
+      "step": "0.010000",
+      "end": "1.000000",
+      "optimize": false
+    },
+    {
+      "name": "input_magicNumber",
+      "default": "123456",
+      "start": "123456",
+      "step": "1",
+      "end": "1234560",
+      "optimize": false
+    }
+  ]
 }

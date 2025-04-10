@@ -9,6 +9,8 @@ from tkinter import filedialog, messagebox
 from pathlib import Path
 import tkinter as tk
 from tkinter import ttk
+from ini_utils.writer import update_ini_tester_inputs
+from core.session import update_json_tester_inputs
 
 from ui.widgets.strategy_config import build_strategy_config
 from ui.widgets.date_fields import build_date_fields
@@ -24,9 +26,44 @@ from ui.widgets.optimized_preview import (
     create_optimized_preview_widget,
     update_optimized_preview,
 )
+import json
+from dataclasses import asdict
+
+
+def on_save_inputs():
+    cache_dir = Path(".cache")
+    ini_path = cache_dir / "current_config.ini"
+    json_path = cache_dir / "current_config.json"
+
+    update_ini_tester_inputs(ini_path, parsed_strategy_inputs)
+    update_json_tester_inputs(json_path, parsed_strategy_inputs)
+    show_toast("Inputs saved!")
+
 
 root = tk.Tk()
 root.title("Optibatch")
+toast_label = None
+def show_toast(message: str, duration: int = 2000) -> None:
+    global toast_label
+
+    if toast_label is not None:
+        toast_label.destroy()
+
+    toast_label_frame = tk.Frame(root, bg="#333", bd=1)
+    toast_label = tk.Label(
+        toast_label_frame,
+        text=message,
+        bg="#333",
+        fg="white",
+        font=("Segoe UI", 9),
+        padx=10,
+        pady=5,
+    )
+    toast_label.pack()
+    toast_label_frame.place(relx=0.5, rely=1.0, anchor="s", y=-10)
+
+    root.after(duration, lambda: toast_label_frame.destroy())
+
 
 menubar = tk.Menu(root)
 build_mt5_menu(menubar, root)
@@ -42,7 +79,7 @@ date_frame.pack(fill="x", padx=10, pady=5)
 inputs_frame = ttk.LabelFrame(root, text="Inputs to Optimize")
 inputs_frame.pack(fill="x", padx=10, pady=5)
 buttons_frame = ttk.Frame(root)
-buttons_frame.pack(side="left", fill="y", padx=(10, 5), pady=5)
+buttons_frame.pack(fill="x", padx=10, pady=10)
 
 # Header fields
 header_vars = build_header_fields(header_frame)
@@ -58,6 +95,9 @@ parsed_strategy_inputs: list[InputParam] = []
 # Optimized preview widget
 optimized_preview = create_optimized_preview_widget(inputs_frame)
 optimized_preview.frame.pack(fill="x", padx=10, pady=(5, 0))
+ttk.Button(inputs_frame, text="💾 Save Inputs", command=on_save_inputs).pack(
+    pady=(5, 0)
+)
 
 # Strategy settings
 strategy_vars = build_strategy_config(strategy_frame)
@@ -129,14 +169,14 @@ def on_load_ini():
 # UI buttons
 build_inputs_section(inputs_frame, on_edit=on_edit_inputs)
 
-build_ini_buttons(
-    buttons_frame,
-    [
-        ("📂 Load INI", on_load_ini, "e", 0),
-        ("✏️ Edit Inputs", on_edit_inputs, "i", 2),
-        ("📊 Pick Symbols", lambda: print("Pick Symbols"), "s", 2),
-    ],
-)
+
+# Layout: horizontally packed buttons
+ttk.Button(buttons_frame, text="📂 Load INI", command=on_load_ini).pack(side="left", padx=5)
+ttk.Button(buttons_frame, text="✏️ Edit Inputs", command=on_edit_inputs).pack(side="left", padx=5)
+ttk.Button(buttons_frame, text="📊 Pick Symbols", command=lambda: print("Pick Symbols")).pack(side="left", padx=5)
+ttk.Button(buttons_frame, text="⏭️ Continue Previous", command=lambda: print("Continue Previous")).pack(side="left", padx=10)
+ttk.Button(buttons_frame, text="🚀 Run Optimizations", command=lambda: print("Run Optimizations")).pack(side="left", padx=5)
+
 
 # Load saved .ini if available
 load_cached_config_if_available(

@@ -13,5 +13,13 @@
       -235
     ]
   },
-  "last_used": "ForexUS"
+  "last_used": "forex",
+  "forex": {
+    "path": "C:\\MT5\\FOREX.com US",
+    "label": "Forex",
+    "click_position": [
+      3439,
+      -738
+    ]
+  }
 }
