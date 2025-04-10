@@ -27,7 +27,17 @@ from ui.widgets.optimized_preview import (
     update_optimized_preview,
 )
 import json
-from dataclasses import asdict
+from ui.symbol_picker import open_symbol_picker
+
+
+def on_pick_symbol_clicked() -> None:
+    open_symbol_picker(root, update_symbol_field)
+
+
+def update_symbol_field(new_symbol: str) -> None:
+    symbol_var.set(
+        new_symbol
+    ) 
 
 
 def on_save_inputs():
@@ -173,8 +183,14 @@ build_inputs_section(inputs_frame, on_edit=on_edit_inputs)
 # Layout: horizontally packed buttons
 ttk.Button(buttons_frame, text="📂 Load INI", command=on_load_ini).pack(side="left", padx=5)
 ttk.Button(buttons_frame, text="✏️ Edit Inputs", command=on_edit_inputs).pack(side="left", padx=5)
-ttk.Button(buttons_frame, text="📊 Pick Symbols", command=lambda: print("Pick Symbols")).pack(side="left", padx=5)
-ttk.Button(buttons_frame, text="⏭️ Continue Previous", command=lambda: print("Continue Previous")).pack(side="left", padx=10)
+ttk.Button(buttons_frame, text="📊 Pick Symbols", command=on_pick_symbol_clicked).pack(
+    side="left", padx=5
+)
+ttk.Button(
+    buttons_frame,
+    text="⏭️ Continue Previous",
+    command=lambda: print("Continue Previous"),
+).pack(side="left", padx=10)
 ttk.Button(buttons_frame, text="🚀 Run Optimizations", command=lambda: print("Run Optimizations")).pack(side="left", padx=5)
 
 

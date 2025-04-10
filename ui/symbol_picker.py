@@ -3,9 +3,10 @@ from tkinter import Toplevel, Scrollbar, Listbox, END, MULTIPLE, messagebox
 import json
 from core.mt5.symbol_loader import load_symbols
 from pathlib import Path
+from typing import Callable
 
 
-def open_symbol_picker(root, symbol_var):
+def open_symbol_picker(root: tk.Tk, on_symbols_picked: Callable[[str], None]) -> None:    
     try:
         with open("settings.json") as f:
             mt5_info = json.load(f)
@@ -77,9 +78,10 @@ def open_symbol_picker(root, symbol_var):
         for i in reversed(selected):  # Remove from bottom up
             selected_listbox.delete(i)
 
-    def save_selection():
+
+    def save_selection() -> None:
         selected = selected_listbox.get(0, END)
-        symbol_var.set(",".join(selected))
+        on_symbols_picked(",".join(selected))  # ✅ Call the function passed in
         picker.destroy()
 
     def refresh():
