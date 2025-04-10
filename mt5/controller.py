@@ -2,16 +2,15 @@ import json
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional, TypedDict
+from typing import Optional, Tuple
 
 import psutil
 import win32con  # type: ignore
 import win32gui  # type: ignore
 import win32process  # type: ignore
 from loguru import logger
-from core.registry import update_geometry, get_geometry
+from core.state import registry
 from core.types import WindowGeometry
-
 
 
 def launch_mt5(mt5_path: Path, ini_file: Path):
@@ -34,56 +33,24 @@ def launch_mt5(mt5_path: Path, ini_file: Path):
     logger.info(f"Launched MT5 from: {terminal} with config {ini_file}")
 
 
-def save_window_geometry(
-    path: Path, geometry: WindowGeometry, install_id: Optional[str] = None
-):
-    """
-    Store window geometry for a specific MT5 folder path.
-    If install_id is provided, use the registry to store the geometry.
-    """
+def save_window_geometry(path: Path, geometry: WindowGeometry) -> None:
     if not geometry:
         return
 
-    if install_id:
-        update_geometry(path, geometry, install_id=install_id)
-    else:
-        try:
-            all_data = {}
-            geom_path = Path("window_geometry.json")
-            if geom_path.exists():
-                with geom_path.open("r") as f:
-                    all_data = json.load(f)
-            all_data[str(path)] = geometry
-            with geom_path.open("w") as f:
-                json.dump(all_data, f, indent=2)
-            logger.info(f"Saved window geometry for {path}")
-        except Exception as e:
-            logger.error(f"Failed to save window geometry: {e}")
+    registry.set("window_geometry", geometry)
+    registry.save()
+    logger.info(f"Saved window geometry for {path}")
 
 
-def load_window_geometry(
-    path: Path, install_id: Optional[str] = None
-) -> Optional[WindowGeometry]:
-    """
-    Load saved window geometry either from the registry (if install_id is provided),
-    or from the legacy window_geometry.json file.
-    """
-    if install_id:
-        return get_geometry(install_id)
-
-    geom_path = Path("window_geometry.json")
-    if not geom_path.exists():
-        return None
-    try:
-        with geom_path.open("r") as f:
-            data = json.load(f)
-        return data.get(str(path))
-    except Exception as e:
-        logger.error(f"Failed to load window geometry: {e}")
-        return None
+def load_window_geometry() -> Optional[WindowGeometry]:
+    geometry = registry.get("window_geometry")
+    if geometry:
+        return geometry
+    logger.warning("No saved window geometry found in app_state.json.")
+    return None
 
 
-def wait_for_mt5_window(mt5_path: Path, timeout: float = 10.0) -> Optional[int]:
+def wait_for_mt5_window(mt5_path: Path, timeout: float = 20.0) -> Optional[int]:
     """Wait up to `timeout` seconds for the MT5 window to appear."""
     interval = 0.5
     elapsed = 0.0
@@ -147,24 +114,32 @@ def get_mt5_window_geometry(mt5_path: Path) -> Optional[WindowGeometry]:
     return None
 
 
-def restore_mt5_window_position(
-    mt5_path: Path, geometry: Optional[WindowGeometry] = None
-):
-    """Restore MT5 window to a previously saved position."""
-    hwnd = _find_mt5_hwnd(mt5_path)
-    if hwnd and geometry:
-        win32gui.SetWindowPos(
-            hwnd,
-            0,
-            geometry["x"],
-            geometry["y"],
-            geometry["width"],
-            geometry["height"],
-            0,
-        )
-        logger.info(f"Window moved to ({geometry['x']}, {geometry['y']})")
+def restore_mt5_window_position(mt5_path: Path) -> None:
+    geometry = registry.get("window_geometry")
+    if geometry:
+        hwnd = _find_mt5_hwnd(mt5_path)
+        if hwnd:
+            win32gui.SetWindowPos(
+                hwnd,
+                0,
+                geometry["x"],
+                geometry["y"],
+                geometry["width"],
+                geometry["height"],
+                0,
+            )
+            logger.info(f"Window restored to ({geometry['x']}, {geometry['y']})")
+        else:
+            logger.warning("Failed to find MT5 window.")
     else:
-        logger.warning("Failed to reposition MT5 window.")
+        logger.warning("No window geometry found in app_state.json.")
+
+
+def get_click_position() -> Optional[Tuple[int, int]]:
+    pos = registry.get("click_position")
+    if pos and isinstance(pos, (list, tuple)) and len(pos) == 2:
+        return int(pos[0]), int(pos[1])
+    return None
 
 
 def _find_mt5_hwnd(mt5_path: Path) -> Optional[int]:

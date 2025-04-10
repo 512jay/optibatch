@@ -4,7 +4,6 @@ import json
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
-
 from core.enums import get_enum_label, enum_label_map, get_value_for_label
 from core.input_parser import InputParam, parse_ini_inputs
 from core.session import (
@@ -16,11 +15,11 @@ from core.session import (
 )
 from ini_utils.loader import parse_ini_file
 from core.session import update_ini_tester_inputs
-from ui.actions.ini_buttons import build_ini_buttons
+from core.state import registry
 from ui.config_loader import load_cached_ui_state
 from ui.edit_inputs_popup import open_edit_inputs_popup
 from ui.ini_loader import load_ini_and_update_ui
-from ui.mt5_menu import build_mt5_menu
+from ui.mt5_menu import build_mt5_menu, update_window_title
 from ui.symbol_picker import open_symbol_picker
 from ui.updaters import populate_ui_from_ini_data
 from ui.widgets.date_fields import build_date_fields
@@ -31,6 +30,7 @@ from ui.widgets.optimized_preview import (
     update_optimized_preview,
 )
 from ui.widgets.strategy_config import build_strategy_config
+from ui.widgets.options_menu import build_options_menu
 
 
 def on_pick_symbol_clicked() -> None:
@@ -68,7 +68,7 @@ def on_save_inputs() -> None:
 root = tk.Tk()
 root.title("Optibatch")
 toast_label = None
-
+update_window_title(root)
 
 def show_toast(message: str, duration: int = 2000) -> None:
     global toast_label
@@ -92,7 +92,11 @@ def show_toast(message: str, duration: int = 2000) -> None:
     root.after(duration, lambda: toast_label_frame.destroy())
 
 
+# Create the top menu bar
 menubar = tk.Menu(root)
+options_menu, use_discrete_months_var = build_options_menu(menubar)
+menubar.add_cascade(label="Options", menu=options_menu)
+root.config(menu=menubar)
 build_mt5_menu(menubar, root)
 root.config(menu=menubar)
 
@@ -241,5 +245,12 @@ load_cached_ui_state(
     root=root,
     on_inputs_loaded=update_optimized_inputs_preview,
 )
+
+def on_app_exit():
+    registry.save()
+    root.destroy()
+
+
+root.protocol("WM_DELETE_WINDOW", on_app_exit)
 
 root.mainloop()

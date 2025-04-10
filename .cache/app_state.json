@@ -1,0 +1,15 @@
+{
+  "install_path": "C:\\MT5\\FOREX.com US",
+  "install_label": "FOREX US",
+  "click_position": [
+    3482,
+    -289
+  ],
+  "window_geometry": {
+    "x": 1275,
+    "y": -1440,
+    "width": 1291,
+    "height": 1397
+  },
+  "use_discrete_months": true
+}
