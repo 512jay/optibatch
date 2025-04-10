@@ -8,6 +8,9 @@ TOGGLE_OPTIONS = [
     ("Enable Report Export", "export_reports"),
     ("Skip Symbols with Cached Results", "skip_cached_results"),
     ("Save Last Opened File Path", "save_last_path"),
+    ("Dry Run Mode, just INI files", "dry_run"),
+    ("Zip up after run", "zipup"),
+    {"Delete files after run", "delete_run"},
 ]
 
 

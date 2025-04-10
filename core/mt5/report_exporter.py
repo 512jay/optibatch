@@ -4,7 +4,7 @@ import pyautogui
 from pathlib import Path
 from loguru import logger
 from core.utils.io import read_utf16_file
-from core.config import config
+from trash.config import config
 
 
 def safe_right_click(x, y, retries=1):

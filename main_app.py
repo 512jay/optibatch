@@ -31,6 +31,12 @@ from ui.widgets.optimized_preview import (
 )
 from ui.widgets.strategy_config import build_strategy_config
 from ui.widgets.options_menu import build_options_menu
+from core.main_runner import run_optimizations
+
+
+def on_run_optimizations_click():
+    config_path = Path(".cache/current_config.json")
+    run_optimizations(config_path)
 
 
 def on_pick_symbol_clicked() -> None:
@@ -200,6 +206,16 @@ def on_load_ini():
     )
 
 
+def on_run_optimizations():
+    try:
+        run_optimizations(Path(".cache/current_config.json"))
+    except Exception as e:
+        print(f"Run failed: {e}")
+        import traceback
+
+        traceback.print_exc()
+
+
 # UI buttons
 build_inputs_section(inputs_frame, on_edit=on_edit_inputs)
 
@@ -222,7 +238,7 @@ ttk.Button(
 ttk.Button(
     buttons_frame,
     text="🚀 Run Optimizations",
-    command=lambda: print("Run Optimizations"),
+    command=on_run_optimizations,
 ).pack(side="left", padx=5)
 
 

@@ -8,7 +8,7 @@ import psutil
 
 from core.mt5.report_exporter import export_mt5_results_to_xml
 from core.mt5.tester_log_monitor import wait_for_optimization_to_finish
-from core.mt5.process import kill_mt5
+from core.process import kill_mt5
 from core.jobs_utils.settings import load_settings
 from ini_utils.formatter import generate_ini_files_from_job
 from core.logging.logger import logger

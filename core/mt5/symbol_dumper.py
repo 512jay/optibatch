@@ -5,7 +5,7 @@ from pathlib import Path
 import time
 import shutil
 
-from core.mt5.process import kill_mt5
+from core.process import kill_mt5
 
 DUMP_SCRIPT_NAME = "DumpSymbols.mq5"
 COMPILED_NAME = "DumpSymbols.ex5"

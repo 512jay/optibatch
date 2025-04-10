@@ -28,3 +28,6 @@ jobs/
 *.tar.gz
 *.tar.bz2
 *.tar.xz
+
+generated_ini/
+trash/

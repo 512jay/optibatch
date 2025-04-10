@@ -1,7 +1,7 @@
 import psutil
 from pathlib import Path
-from core.config import config
-
+# from trash.config import config
+from core.state import registry
 
 def kill_mt5(target_path: str = None) -> None:
     """
@@ -11,9 +11,9 @@ def kill_mt5(target_path: str = None) -> None:
         target_path (str): Full path to terminal64.exe from settings.json
     """
     if not target_path:
-        target_path = config.get("terminal_path")
+        target_path = registry.get("terminal_path")
         if not target_path:
-            print("❌ No MT5 path provided and no terminal_path found in settings.json.")
+            print("❌ No MT5 path provided and no terminal_path found in app_settings.json.")
             return
     else:
         target_path = str(Path(target_path).resolve()).lower()

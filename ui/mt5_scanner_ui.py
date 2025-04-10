@@ -13,7 +13,7 @@ from tkinter import (
 )
 from tkinter.ttk import Separator
 from core.mt5.scanner import scan_mt5_from_origin
-from core.config import config
+from trash.config import config
 from os import getenv
 from pathlib import Path
 
