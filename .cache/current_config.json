@@ -2,12 +2,12 @@
   "path": ".cache\\current_config.ini",
   "tester": {
     "Expert": "Shared Projects\\IndyTSL\\IndyTSL.ex5",
-    "Symbol": "EURUSD",
+    "Symbol": "GBPSEK",
     "Period": "H1",
     "Optimization": 1,
     "Model": "1",
-    "FromDate": "2024.07.01",
-    "ToDate": "2024.08.31",
+    "FromDate": "2023.03.01",
+    "ToDate": "2023.05.31",
     "ForwardMode": 0,
     "Deposit": "10000",
     "Currency": "USD",
@@ -29,7 +29,7 @@
       "name": "input_LongStopLossPercent",
       "default": "0.2",
       "start": "0.2",
-      "step": "0.020000",
+      "step": "0.20000",
       "end": "2.000000",
       "optimize": true
     },
@@ -37,7 +37,7 @@
       "name": "input_ShortStopLossPercent",
       "default": "0.2",
       "start": "0.2",
-      "step": "0.020000",
+      "step": "0.20000",
       "end": "2.000000",
       "optimize": true
     },

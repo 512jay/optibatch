@@ -6,7 +6,6 @@ from loguru import logger
 from core.process import kill_mt5
 from core.run_utils import (
     launch_mt5_with_ini,
-    get_latest_log_timestamp,
     wait_for_mt5_to_finish
 )
 
@@ -24,13 +23,12 @@ def optimize_with_mt5(
     """
     kill_mt5(str(mt5_path))
 
-    timestamp_before = get_latest_log_timestamp(log_path) or datetime.now()
     launch_mt5_with_ini(ini_file, mt5_path)
 
     logger.info(f"Waiting for MT5 to finish: {ini_file.name}")
-    success = wait_for_mt5_to_finish(timestamp_before, timeout=timeout)
+    success = wait_for_mt5_to_finish(timeout=timeout)
 
-    kill_mt5(str(mt5_path))
+    # kill_mt5(str(mt5_path))
 
     if success:
         logger.success(f"MT5 optimization completed: {ini_file.name}")

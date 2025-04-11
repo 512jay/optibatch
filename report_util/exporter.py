@@ -11,7 +11,7 @@ import pyautogui
 
 from core.state import registry
 from windows.controller import ensure_mt5_ready_for_automation
-
+from report_util.cleaner import close_auto_opened_report_window
 
 REPORTS_DIR = Path("generated") / "reports"
 MT5_EXPORT_DIR = Path.home() / "Documents" / "MetaTrader 5" / "Tester"

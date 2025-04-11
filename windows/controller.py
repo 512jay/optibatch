@@ -12,7 +12,11 @@ from pathlib import Path
 from typing import Optional, Tuple
 from loguru import logger
 from core.state import registry
+from typing import Optional
 
+
+MAX_RETRIES = 5
+RETRY_DELAY_SECONDS = 2
 
 def load_window_geometry() -> Optional[Tuple[int, int, int, int]]:
     """
@@ -36,38 +40,51 @@ def load_window_geometry() -> Optional[Tuple[int, int, int, int]]:
 
 def find_mt5_window() -> Optional[int]:
     """
-    Locate the MT5 window handle by matching process path with registry's terminal_path.
+    Locate the MT5 window handle by matching the process path with the registry's terminal_path.
+    Retries for a few seconds if the window is not immediately visible.
     Returns the window handle (HWND) or None if not found.
     """
-    terminal_path = registry.get("terminal_path")
+    terminal_path = registry.get("install_path")
     if not terminal_path:
-        logger.error("❌ terminal_path not set in registry.")
+        logger.warning("❌ No MT5 path found in registry.")
         return None
-    target_path = str(Path(terminal_path).resolve()).lower()
+
+    # Normalize path for comparison
+    normalized_target_path = str(Path(terminal_path).resolve()).lower()
 
     for proc in psutil.process_iter(["pid", "name", "exe"]):
         try:
-            if (
-                proc.info["name"]
-                and "terminal64.exe" in proc.info["name"].lower()
-                and proc.info["exe"]
-                and str(Path(proc.info["exe"]).resolve()).lower() == target_path
-            ):
-                pid = proc.pid
-                hwnds: list[int] = []
+            if proc.info["name"] == "terminal64.exe":
+                exe_path = str(Path(proc.info["exe"]).resolve()).lower()
+                if normalized_target_path in exe_path:
+                    pid = proc.info["pid"]
 
-                def _enum(hwnd, hwnds_out):
-                    tid, _ = win32process.GetWindowThreadProcessId(hwnd)
-                    if tid == pid and win32gui.IsWindowVisible(hwnd):
-                        hwnds_out.append(hwnd)
-                    return True
+                    for attempt in range(1, MAX_RETRIES + 1):
+                        hwnds: list[int] = []
 
-                win32gui.EnumWindows(_enum, hwnds)
-                return hwnds[0] if hwnds else None
+                        def callback(hwnd, hwnds_list):
+                            tid, current_pid = win32process.GetWindowThreadProcessId(
+                                hwnd
+                            )
+                            if current_pid == pid and win32gui.IsWindowVisible(hwnd):
+                                hwnds_list.append(hwnd)
+
+                        win32gui.EnumWindows(callback, hwnds)
+
+                        if hwnds:
+                            return hwnds[0]  # Return the first visible window handle
+
+                        logger.debug(
+                            f"⏳ Retry {attempt}: No visible window found yet. Sleeping {RETRY_DELAY_SECONDS}s"
+                        )
+                        time.sleep(RETRY_DELAY_SECONDS)
+
+                    logger.warning("⚠️ Could not locate MT5 window after retries.")
+                    return None
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
 
-    logger.warning("⚠️ Could not locate MT5 window.")
+    logger.warning("⚠️ No MT5 process found matching terminal_path.")
     return None
 
 
@@ -87,16 +104,14 @@ def focus_window(hwnd: int) -> None:
     try:
         win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
         win32gui.SetForegroundWindow(hwnd)
-        logger.info("🔎 MT5 window focused.")
     except Exception as e:
         logger.warning(f"⚠️ Could not focus window: {e}")
 
 
-def apply_mt5_window_geometry(delay_seconds: int = 20) -> None:
+def apply_mt5_window_geometry(delay_seconds: int = 0) -> None:
     """
     Waits for MT5 to fully launch, then applies window position and size.
     """
-    logger.info(f"🕓 Waiting {delay_seconds}s to reposition MT5...")
     time.sleep(delay_seconds)
 
     hwnd = find_mt5_window()

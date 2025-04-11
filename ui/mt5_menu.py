@@ -29,6 +29,8 @@ def add_install(root) -> None:
         return
 
     registry.set("install_path", resolved_path)
+    terminal_path = resolved_path + "\\terminal64.exe"
+    registry.set("terminal_path", terminal_path)
 
     install_label = simpledialog.askstring(
         "Label This Install", "Enter a short name (e.g. 'forex_demo'):"
@@ -115,7 +117,8 @@ def update_window_title(root: tk.Tk) -> None:
 
 def set_click_position() -> None:
     """
-    Record a user click position on the screen and save it for reuse.
+    Record a user click position on the screen and save it as an offset
+    relative to the MT5 window.
     """
     try:
         from pynput.mouse import Listener
@@ -123,23 +126,35 @@ def set_click_position() -> None:
         messagebox.showerror("Error", "pynput not installed. Run: pip install pynput")
         return
 
-    position = []
+    geometry = registry.get("window_geometry")
+    if not geometry or not isinstance(geometry, dict):
+        messagebox.showwarning(
+            "Missing Geometry",
+            "Save MT5 window geometry before setting click position.",
+        )
+        return
 
-    def on_click(x, y, button, pressed):
+    position: list[tuple[int, int]] = []
+
+    def on_click(x: int, y: int, button, pressed: bool) -> None:
         if pressed:
             position.append((x, y))
             listener.stop()
 
     messagebox.showinfo(
-        "Click Anywhere", "Please click anywhere on the screen, after clicking OK, to set the position..."
+        "Click Anywhere",
+        "After clicking OK, click anywhere inside the MT5 window to set the offset for context menu export...",
     )
 
     with Listener(on_click=on_click) as listener:
         listener.join()
 
     if position:
-        registry.set("click_position", position[0])
+        click_x, click_y = position[0]
+        offset_x = click_x - geometry["x"]
+        offset_y = click_y - geometry["y"]
+        registry.set("click_offset", [offset_x, offset_y])
         registry.save()
-        messagebox.showinfo("Success", f"Click position saved: {position[0]}")
+        messagebox.showinfo("Success", f"Click offset saved: ({offset_x}, {offset_y})")
     else:
         messagebox.showwarning("No Position", "No click was recorded.")

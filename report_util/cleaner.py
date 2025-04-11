@@ -26,3 +26,18 @@ def empty_reports_folder() -> None:
     else:
         REPORTS_DIR.mkdir(parents=True, exist_ok=True)
         logger.info(f"📁 Created missing reports folder at {REPORTS_DIR}")
+
+import pyautogui
+import time
+from loguru import logger
+
+
+def close_auto_opened_report_window() -> None:
+    """
+    Attempts to close the report viewer window that may open after export.
+    Uses Ctrl+W, which is a common 'close window' shortcut.
+    """
+    time.sleep(0.3)
+    pyautogui.hotkey("ctrl", "w")
+    logger.info("🔐 Sent Ctrl+W to close any auto-opened report window.")
+    time.sleep(0.3)

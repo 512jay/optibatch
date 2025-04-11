@@ -9,7 +9,7 @@ from pathlib import Path
 from loguru import logger
 
 from core.state import registry
-
+from windows.controller import apply_mt5_window_geometry
 
 # ==========================
 # MT5 Launching Utilities
@@ -23,6 +23,25 @@ def get_mt5_executable_path_from_registry() -> Path:
     base_path = Path(registry.get("install_path", "C:/MT5"))
     return base_path / "terminal64.exe"
 
+
+def launch_mt5_with_ini(ini_file: Path, mt5_path: Path, delay: int = 5) -> None:
+    """
+    Launches MetaTrader 5 with the given INI file using subprocess.
+    Expects mt5_path to point to terminal64.exe.
+    """
+
+    if not mt5_path.exists():
+        raise FileNotFoundError(f"MT5 executable not found: {mt5_path}")
+    if not ini_file.exists():
+        raise FileNotFoundError(f"INI file not found: {ini_file}")
+
+    logger.debug(f"Launching MT5: {mt5_path} /config:{ini_file}")
+    subprocess.Popen([str(mt5_path), f"/config:{str(ini_file)}"])
+    wait_for_mt5_to_finish()
+    
+
+    logger.debug(f"Waiting {delay} seconds for MT5 to launch...")
+    time.sleep(delay)
 
 
 def get_mt5_data_path(terminal_path: Path) -> Path | None:
@@ -70,55 +89,30 @@ def get_latest_log_path(log_folder: str | Path) -> Path | None:
     return log_files[0] if log_files else None
 
 
-def get_latest_log_timestamp(log_folder: Path) -> datetime | None:
-    latest_log = get_latest_log_path(log_folder)
-    if not latest_log:
-        return None
-
-    timestamp_pattern = re.compile(r"^(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2})")
-    last_timestamp = None
-
-    with latest_log.open(encoding="utf-16") as f:
-        for line in f:
-            match = timestamp_pattern.match(line)
-            if match:
-                try:
-                    last_timestamp = datetime.strptime(
-                        match.group(1), "%Y.%m.%d %H:%M:%S"
-                    )
-                except ValueError:
-                    continue
-
-    return last_timestamp
-
-
-def wait_for_mt5_to_finish(after: datetime, timeout: int = 300) -> bool:
+def wait_for_mt5_to_finish(timeout: int = 300) -> bool:
     """
-    Watches MT5 tester logs for 'optimization finished' or 'already processed'
-    lines that appear *after* the given timestamp.
-    Returns True if successful, False if timeout.
+    Watches MT5 tester logs for 'optimization finished' or 'optimization already processed'.
+    Returns True if either phrase is detected within the timeout.
     """
+    apply_mt5_window_geometry()
     log_dir = Path(registry.get("tester_log_path"))
     deadline = time.time() + timeout
     seen_lines = set()
-    pattern = re.compile(
-        r"^(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}).*?(optimization finished|optimization already processed)"
-    )
+    keywords = ("optimization finished", "optimization already processed")
 
-    logger.debug(f"Waiting for MT5 log activity after: {after}")
-    logger.debug(f"Monitoring log folder: {log_dir}")
+    logger.debug(f"⏳ Watching MT5 tester logs in: {log_dir}")
 
     while time.time() < deadline:
         logs = sorted(
             log_dir.glob("*.log"), key=lambda p: p.stat().st_mtime, reverse=True
         )
         if not logs:
-            logger.debug("No log files found.")
+            logger.debug("📭 No log files found yet.")
             time.sleep(1)
             continue
 
         latest_log = logs[0]
-        #  logger.debug(f"Scanning log file: {latest_log.name}")
+        logger.debug(f"📄 Scanning latest log file: {latest_log.name}")
 
         try:
             with latest_log.open(encoding="utf-16") as f:
@@ -127,24 +121,17 @@ def wait_for_mt5_to_finish(after: datetime, timeout: int = 300) -> bool:
                         continue
                     seen_lines.add(line)
 
-                    match = pattern.match(line)
-                    if match:
-                        log_time = datetime.strptime(
-                            match.group(1), "%Y.%m.%d %H:%M:%S"
-                        )
-                        logger.debug(f"Found log entry: {match.group(2)} at {log_time}")
-                        if log_time > after:
-                            logger.debug(
-                                "Log line is newer than launch time — assuming MT5 ran successfully."
-                            )
-                            return True
+                    if any(k in line.lower() for k in keywords):
+                        logger.success(f"🟢 MT5 log line detected: {line.strip()}")
+                        return True
         except Exception as e:
-            logger.warning(f"Error reading log: {e}")
+            logger.warning(f"⚠️ Error reading log file {latest_log.name}: {e}")
 
         time.sleep(2)
 
-    logger.error("MT5 optimization log not found or did not complete in time.")
+    logger.error("❌ MT5 optimization not detected within timeout.")
     return False
+
 
 # ==========================
 # Run Management Utilities

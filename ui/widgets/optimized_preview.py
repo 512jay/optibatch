@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 from core.input_parser import InputParam
 from typing import NamedTuple, Optional
+from math import ceil
 
 
 class OptimizedPreview(NamedTuple):
@@ -13,15 +14,18 @@ class OptimizedPreview(NamedTuple):
 
 def create_optimized_preview_widget(parent: tk.Widget) -> OptimizedPreview:
     frame = tk.Frame(parent)
+    frame.grid_rowconfigure(0, weight=1)
+    frame.grid_columnconfigure(0, weight=1)
+
+    # Set a more readable row height for Treeview
+    style = ttk.Style()
+    style.configure("Treeview", rowheight=28, font=("Segoe UI", 10))
+    style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"))
+
 
     columns = ("default", "start", "step", "stop")
 
-    tree = ttk.Treeview(
-        frame,
-        columns=columns,
-        show="tree headings",
-        height=3,
-    )
+    tree = ttk.Treeview(frame, columns=columns, show="tree headings")
 
     tree.heading("#0", text="Name", anchor="w")
     tree.column("#0", anchor="w", width=200, stretch=True)
@@ -30,10 +34,10 @@ def create_optimized_preview_widget(parent: tk.Widget) -> OptimizedPreview:
         tree.heading(col, text=col.capitalize())
         tree.column(col, anchor="center", width=100, stretch=True)
 
-    tree.pack(side="left", fill="both", expand=True)
+    tree.grid(row=0, column=0, sticky="nsew")
 
-    scrollbar = tk.Scrollbar(frame, command=tree.yview)
-    scrollbar.pack(side="right", fill="y")
+    scrollbar = tk.Scrollbar(frame, orient="vertical", command=tree.yview)
+    scrollbar.grid(row=0, column=1, sticky="ns")
     tree.config(yscrollcommand=scrollbar.set)
 
     # Bind double-click to enable editing
@@ -42,16 +46,11 @@ def create_optimized_preview_widget(parent: tk.Widget) -> OptimizedPreview:
     return OptimizedPreview(frame=frame, tree=tree)
 
 
-from math import ceil
-from core.input_parser import InputParam
-
-
 def count_variants(inputs: list[InputParam]) -> int:
     total = 1
     for param in inputs:
         if param.optimize:
             try:
-                # Ensure values are not None before casting
                 if (
                     param.start is not None
                     and param.end is not None
@@ -74,10 +73,8 @@ def update_optimized_preview(
     tree = widget.tree
     tree.delete(*tree.get_children())
 
-    # Update header with total variants
     variant_count = count_variants(inputs)
     tree.heading("#0", text=f"Inputs to Optimize ({variant_count} variations)")
-
 
     for param in inputs:
         if param.optimize:
@@ -98,11 +95,11 @@ def edit_cell(tree: ttk.Treeview, event: tk.Event) -> None:
     column_id = tree.identify_column(event.x)
 
     if column_id == "#0":
-        return  # Don't allow editing of the Name column
+        return
 
     bbox = tree.bbox(row_id, column_id)
     if not bbox:
-        return  # Avoid unpacking error if bbox returns ""
+        return
 
     x, y, width, height = bbox
     value = tree.set(row_id, column_id)

@@ -1,21 +1,26 @@
 {
   "install_path": "C:\\MT5\\FOREX.com US",
-  "install_label": "FOREX US",
+  "install_label": "FOREX",
   "click_position": [
-    3493,
-    -256
+    3571,
+    -280
   ],
   "window_geometry": {
-    "x": 1275,
-    "y": -1440,
-    "width": 1291,
-    "height": 1397
+    "x": 3346,
+    "y": -3577,
+    "width": 3035,
+    "height": 3392
   },
   "use_discrete_months": true,
   "dry_run": false,
   "zipup": false,
-  "last_job_name": "20250410_220030_IndyTSL",
+  "last_job_name": "20250411_124018_IndyTSL",
   "tester_log_path": "C:\\Users\\512ja\\AppData\\Roaming\\MetaQuotes\\Terminal\\36016A821D47D6047C5089850BCAA4D8\\Tester\\logs",
   "symbol_file_path": "C:\\Users\\512ja\\AppData\\Roaming\\MetaQuotes\\Terminal\\36016A821D47D6047C5089850BCAA4D8\\MQL5\\Files\\symbols.txt",
-  "current_basename": "EURUSD.20240701_20240731"
+  "current_basename": "GBPSEK.20230401_20230430",
+  "terminal_path": "C:\\MT5\\FOREX.com US\\terminal64.exe",
+  "click_offset": [
+    375,
+    3063
+  ]
 }

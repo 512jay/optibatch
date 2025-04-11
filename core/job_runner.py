@@ -8,27 +8,8 @@ from core.state import registry
 from core.automation import optimize_with_mt5
 from report_util.grabber import export_and_confirm_xml, get_current_xml_path
 from loguru import logger
+from core.job_context import build_job_context, JobContext
 
-
-@dataclass
-class JobContext:
-    symbol: str
-    ini_file: Path
-    basename: str
-    run_folder: Path
-
-    @property
-    def xml_path(self) -> Path:
-        return get_current_xml_path()
-
-
-def build_job_context(ini_file: Path, run_folder: Path) -> JobContext:
-    symbol = ini_file.parent.name
-    parts = ini_file.stem.split(".", 1)
-    basename = ini_file.stem if len(parts) == 2 else f"{symbol}.{ini_file.stem}"
-    return JobContext(
-        symbol=symbol, ini_file=ini_file, basename=basename, run_folder=run_folder
-    )
 
 
 def xml_exists(context: JobContext) -> bool:

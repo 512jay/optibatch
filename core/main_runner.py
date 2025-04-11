@@ -13,7 +13,8 @@ from core.run_utils import (
 )
 from core.ini_writer import generate_ini_files
 from core.state import registry
-from core.job_runner import build_job_context, xml_exists, run_symbol_optimization
+from core.job_runner import xml_exists, run_symbol_optimization
+from core.job_context import build_job_context
 
 mt5_path = Path(registry.get("install_path", "C:/MT5/terminal64.exe"))
 
