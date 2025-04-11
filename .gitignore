@@ -29,5 +29,5 @@ jobs/
 *.tar.bz2
 *.tar.xz
 
-generated_ini/
+generated/
 trash/

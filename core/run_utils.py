@@ -1,40 +1,76 @@
-# File: optibatch/core/run_utils.py
+# File: core/run_utils.py
 
-from datetime import datetime
-from pathlib import Path
-import shutil
-from pathlib import Path
-import zipfile
+import re
 import subprocess
 import time
 from datetime import datetime
-import re
 from pathlib import Path
+
+from loguru import logger
+
+from core.state import registry
+
+
+# ==========================
+# MT5 Launching Utilities
+# ==========================
+
+
+def get_mt5_executable_path_from_registry() -> Path:
+    """
+    Reads 'install_path' from registry and appends 'terminal64.exe'.
+    """
+    base_path = Path(registry.get("install_path", "C:/MT5"))
+    return base_path / "terminal64.exe"
+
+
+
+def get_mt5_data_path(terminal_path: Path) -> Path | None:
+    """
+    Given the path to terminal64.exe, tries to locate the hashed MT5 data directory.
+    Returns the path to the `tester/logs` directory, or None if not found.
+    """
+    install_dir = terminal_path.resolve()
+
+    metaquotes_root = Path.home() / "AppData" / "Roaming" / "MetaQuotes" / "Terminal"
+    if not metaquotes_root.exists():
+        return None
+
+    for hash_dir in metaquotes_root.iterdir():
+        if not hash_dir.is_dir():
+            continue
+
+        terminal_cfg = hash_dir / "origin.txt"
+        if terminal_cfg.exists():
+            try:
+                content = terminal_cfg.read_text(encoding="utf-16").strip()
+                if Path(content).resolve() == install_dir:
+                    return hash_dir / "tester" / "logs"
+            except Exception:
+                continue
+
+    return None
+
+
 # ==========================
 # Log Monitoring
 # ==========================
 
-import re
-from datetime import datetime
-
-
-def get_latest_log_path(log_folder: Path) -> Path | None:
+def get_latest_log_path(log_folder: str | Path) -> Path | None:
     """
-    Returns the most recently modified .log file in the tester/logs folder.
-    Returns None if no logs exist.
+    Returns the most recently modified .log file in the given folder.
+    Accepts a string or Path.
     """
+    log_folder = Path(log_folder)  # ← Convert str to Path if needed
+
     log_files = sorted(
         log_folder.glob("*.log"), key=lambda p: p.stat().st_mtime, reverse=True
     )
+
     return log_files[0] if log_files else None
 
 
 def get_latest_log_timestamp(log_folder: Path) -> datetime | None:
-    """
-    Scans the latest MT5 tester log for the most recent timestamp entry.
-    Assumes logs are encoded in UTF-16 and timestamps look like: '2025.04.10 08:00:02'
-    Returns a datetime object or None if not found.
-    """
     latest_log = get_latest_log_path(log_folder)
     if not latest_log:
         return None
@@ -56,153 +92,83 @@ def get_latest_log_timestamp(log_folder: Path) -> datetime | None:
     return last_timestamp
 
 
-def wait_for_mt5_to_finish(
-    log_dir: Path, start_time: float, timeout: int = 300
-) -> bool:
+def wait_for_mt5_to_finish(after: datetime, timeout: int = 300) -> bool:
     """
-    Watches MT5 tester logs for 'optimization finished' or 'already processed'.
+    Watches MT5 tester logs for 'optimization finished' or 'already processed'
+    lines that appear *after* the given timestamp.
     Returns True if successful, False if timeout.
     """
+    log_dir = Path(registry.get("tester_log_path"))
     deadline = time.time() + timeout
-    last_seen = None
+    seen_lines = set()
+    pattern = re.compile(
+        r"^(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}).*?(optimization finished|optimization already processed)"
+    )
+
+    logger.debug(f"Waiting for MT5 log activity after: {after}")
+    logger.debug(f"Monitoring log folder: {log_dir}")
 
     while time.time() < deadline:
         logs = sorted(
             log_dir.glob("*.log"), key=lambda p: p.stat().st_mtime, reverse=True
         )
         if not logs:
+            logger.debug("No log files found.")
             time.sleep(1)
             continue
 
         latest_log = logs[0]
-        with latest_log.open(encoding="utf-16") as f:
-            for line in f:
-                if (
-                    "optimization finished" in line
-                    or "optimization already processed" in line
-                ):
-                    return True
+        #  logger.debug(f"Scanning log file: {latest_log.name}")
+
+        try:
+            with latest_log.open(encoding="utf-16") as f:
+                for line in f:
+                    if line in seen_lines:
+                        continue
+                    seen_lines.add(line)
+
+                    match = pattern.match(line)
+                    if match:
+                        log_time = datetime.strptime(
+                            match.group(1), "%Y.%m.%d %H:%M:%S"
+                        )
+                        logger.debug(f"Found log entry: {match.group(2)} at {log_time}")
+                        if log_time > after:
+                            logger.debug(
+                                "Log line is newer than launch time — assuming MT5 ran successfully."
+                            )
+                            return True
+        except Exception as e:
+            logger.warning(f"Error reading log: {e}")
+
         time.sleep(2)
 
+    logger.error("MT5 optimization log not found or did not complete in time.")
     return False
 
+# ==========================
+# Run Management Utilities
+# ==========================
 
-def launch_mt5_with_ini(ini_file: Path, mt5_path: Path) -> None:
+from datetime import datetime
+import shutil
+
+
+def create_run_folder(ea_name: str) -> Path:
     """
-    Launches MetaTrader 5 with the given .ini config file.
-    """
-    if not mt5_path.exists():
-        raise FileNotFoundError(f"MT5 executable not found: {mt5_path}")
-
-    if not ini_file.exists():
-        raise FileNotFoundError(f"INI file not found: {ini_file}")
-
-    subprocess.Popen([str(mt5_path), f"/config:{ini_file}"])
-
-
-def create_run_folder(ea_name: str, base_dir: str = "generated_ini") -> Path:
-    """
-    Creates a run folder like: generated_ini/{timestamp}_{ea_name}/
-    Returns the Path object to that folder.
+    Creates a timestamped folder for a new run under 'generated/'.
+    Returns the Path to the new run folder.
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    folder_name = f"{timestamp}_{ea_name}"
-    run_folder = Path(base_dir) / folder_name
-    run_folder.mkdir(parents=True, exist_ok=False)
+    run_folder = Path("generated") / f"{timestamp}_{ea_name}"
+    run_folder.mkdir(parents=True, exist_ok=True)
     return run_folder
 
 
-def get_symbol_folder(run_folder: Path, symbol: str) -> Path:
+def copy_core_files_to_run(run_folder: Path, ini_src: Path, json_src: Path) -> None:
     """
-    Creates and returns a folder inside `run_folder` for the given symbol.
+    Copies the core .ini and .json config files into the root of the run folder
+    for reference or recordkeeping.
     """
-    symbol_folder = run_folder / symbol
-    symbol_folder.mkdir(parents=True, exist_ok=True)
-    return symbol_folder
-
-
-def copy_core_files_to_run(
-    run_folder: Path, ini_src: Path, json_src: Path | None = None
-) -> tuple[Path, Path | None]:
-    """
-    Copies the core INI and optional JSON config into the run folder.
-    Filenames will match the run folder name (e.g., 20250410_1120_IndyTSL.ini).
-    Returns a tuple of (ini_path, json_path or None).
-    """
-    base_name = run_folder.name
-    ini_dest = run_folder / f"{base_name}.ini"
-    shutil.copy2(ini_src, ini_dest)
-
-    json_dest = None
-    if json_src and json_src.exists():
-        json_dest = run_folder / f"{base_name}.json"
-        shutil.copy2(json_src, json_dest)
-
-    return ini_dest, json_dest
-
-
-def archive_run_folder(run_folder: Path, delete_original: bool = False) -> Path:
-    """
-    Zips the entire run folder (e.g., 20250410_1120_IndyTSL).
-    If delete_original=True, deletes the folder after zipping.
-    Returns the path to the zip file.
-    """
-    zip_path = run_folder.with_suffix(".zip")
-
-    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zipf:
-        for file_path in run_folder.rglob("*"):
-            arcname = file_path.relative_to(run_folder.parent)
-            zipf.write(file_path, arcname)
-
-    if delete_original:
-        shutil.rmtree(run_folder)
-
-    return zip_path
-
-
-def write_readme(
-    run_folder: Path,
-    ea_name: str,
-    date_range: tuple[str, str],
-    symbols: list[str],
-    optimization: str,
-    forward: str,
-    month_split: bool,
-    ini_count: int,
-) -> Path:
-    """
-    Writes a README.txt file in the run folder summarizing the run.
-    Returns the path to the README.
-    """
-    readme_path = run_folder / "README.txt"
-    with readme_path.open("w", encoding="utf-8") as f:
-        f.write(f"Run ID: {run_folder.name}\n")
-        f.write(f"Expert Advisor: {ea_name}\n")
-        f.write(f"Date Range: {date_range[0]} to {date_range[1]}\n")
-        f.write(f"Symbols: {', '.join(symbols)}\n")
-        f.write(f"Optimization Mode: {optimization}\n")
-        f.write(f"Forward Mode: {forward}\n")
-        f.write(
-            f"Month-to-Month Splitting: {'Enabled' if month_split else 'Disabled'}\n"
-        )
-        f.write(f"Files Generated: {ini_count} .ini files\n")
-        f.write(f"Original Configs: {run_folder.name}.ini, .json\n")
-    return readme_path
-
-
-def delete_run_folder(run_folder: Path) -> None:
-    """
-    Deletes the entire run folder and all its contents.
-
-    Example:
-    run_folder = Path("generated_ini/20250410_1120_IndyTSL")
-    delete_run_folder(run_folder)
-    """
-    if not run_folder.exists() or not run_folder.is_dir():
-        raise FileNotFoundError(f"Run folder not found: {run_folder}")
-
-    # Safety: only allow deleting inside generated_ini/
-    if "generated_ini" not in str(run_folder.resolve()):
-        raise ValueError("Deletion is only allowed for folders inside 'generated_ini'")
-
-    shutil.rmtree(run_folder)
+    shutil.copy2(ini_src, run_folder / "current_config.ini")
+    shutil.copy2(json_src, run_folder / "current_config.json")

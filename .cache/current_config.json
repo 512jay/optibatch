@@ -5,9 +5,9 @@
     "Symbol": "EURUSD",
     "Period": "H1",
     "Optimization": 1,
-    "Model": "0",
-    "FromDate": "2024.09.01",
-    "ToDate": "2024.11.30",
+    "Model": "1",
+    "FromDate": "2024.07.01",
+    "ToDate": "2024.08.31",
     "ForwardMode": 0,
     "Deposit": "10000",
     "Currency": "USD",
@@ -43,10 +43,10 @@
     },
     "input_LongTakeProfitPercent": {
       "name": "input_LongTakeProfitPercent",
-      "default": "0.0",
-      "start": "0.0",
-      "step": "0.000000",
-      "end": "0.000000",
+      "default": "0.2",
+      "start": "0.2",
+      "step": ".2",
+      "end": "2",
       "optimize": false
     },
     "input_ShortTakeProfitPercent": {

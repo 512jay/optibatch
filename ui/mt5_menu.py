@@ -9,6 +9,7 @@ from core.types import WindowGeometry  # adjust if needed
 from typing import Optional
 from typing_extensions import Tuple
 import pynput
+from  core.state import registry
 
 
 def add_install(root) -> None:
@@ -40,6 +41,28 @@ def add_install(root) -> None:
     update_window_title(root)
 
 
+def add_log_folder(root):
+    """
+    Prompt the user to select an MT5 folder and save it as the active install path.
+    """
+    selected_folder = filedialog.askdirectory(title="Select MT5 Tester/Log Folder")
+    if not selected_folder:
+        return
+
+    resolved_path = str(Path(selected_folder).resolve())
+
+    confirm = messagebox.askyesno(
+        "Tester Log Folder", f"Set this path as the default log folder to get Tester info?\n\n{resolved_path}"
+    )
+    if not confirm:
+        return
+
+    registry.set("tester_log_path", resolved_path)
+    registry.save()
+    messagebox.showinfo("Tester Log Path", f"Tester log path saved to app settings.")
+    update_window_title(root)
+
+
 def build_mt5_menu(
     menubar: tk.Menu, root: tk.Tk, selected_mt5_id: Optional[str] = None
 ):
@@ -55,6 +78,7 @@ def build_mt5_menu(
     )
     mt5_menu.add_separator()
     mt5_menu.add_command(label="📁 Select MT5 Install", command=lambda: add_install(root))
+    mt5_menu.add_command(label="Select MT5 Tester/Logs Folder", command=lambda: add_log_folder(root))
     mt5_menu.add_command(
         label="🖱 Set Click Position",
         command=lambda: set_click_position(),

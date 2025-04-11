@@ -14,5 +14,8 @@
   "use_discrete_months": true,
   "dry_run": false,
   "zipup": false,
-  "last_job_name": "20250410_083924_IndyTSL"
+  "last_job_name": "20250410_220030_IndyTSL",
+  "tester_log_path": "C:\\Users\\512ja\\AppData\\Roaming\\MetaQuotes\\Terminal\\36016A821D47D6047C5089850BCAA4D8\\Tester\\logs",
+  "symbol_file_path": "C:\\Users\\512ja\\AppData\\Roaming\\MetaQuotes\\Terminal\\36016A821D47D6047C5089850BCAA4D8\\MQL5\\Files\\symbols.txt",
+  "current_basename": "EURUSD.20240701_20240731"
 }

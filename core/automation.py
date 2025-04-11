@@ -14,7 +14,7 @@ def optimize_with_mt5(
     ini_file: Path,
     mt5_path: Path,
     log_path: Path,
-    timeout: int = 300
+    timeout: int = 7200
 ) -> bool:
     """
     Runs a single MT5 optimization job using the provided INI file.
@@ -28,7 +28,7 @@ def optimize_with_mt5(
     launch_mt5_with_ini(ini_file, mt5_path)
 
     logger.info(f"Waiting for MT5 to finish: {ini_file.name}")
-    success = wait_for_mt5_to_finish(log_path, after=timestamp_before, timeout=timeout)
+    success = wait_for_mt5_to_finish(timestamp_before, timeout=timeout)
 
     kill_mt5(str(mt5_path))
 

@@ -42,11 +42,42 @@ def create_optimized_preview_widget(parent: tk.Widget) -> OptimizedPreview:
     return OptimizedPreview(frame=frame, tree=tree)
 
 
+from math import ceil
+from core.input_parser import InputParam
+
+
+def count_variants(inputs: list[InputParam]) -> int:
+    total = 1
+    for param in inputs:
+        if param.optimize:
+            try:
+                # Ensure values are not None before casting
+                if (
+                    param.start is not None
+                    and param.end is not None
+                    and param.step is not None
+                ):
+                    start = float(param.start)
+                    end = float(param.end)
+                    step = float(param.step)
+                    if step > 0 and end >= start:
+                        steps = ceil((end - start) / step) + 1
+                        total *= steps
+            except (ValueError, ZeroDivisionError):
+                continue
+    return total
+
+
 def update_optimized_preview(
     widget: OptimizedPreview, inputs: list[InputParam]
 ) -> None:
     tree = widget.tree
     tree.delete(*tree.get_children())
+
+    # Update header with total variants
+    variant_count = count_variants(inputs)
+    tree.heading("#0", text=f"Inputs to Optimize ({variant_count} variations)")
+
 
     for param in inputs:
         if param.optimize:
