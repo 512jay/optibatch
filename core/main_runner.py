@@ -1,4 +1,5 @@
-# File: optibatch/core/main_runner.py
+# File: core/main_runner.py
+
 from pathlib import Path
 import json
 import time
@@ -11,30 +12,27 @@ from core.run_utils import (
     get_mt5_executable_path_from_registry,
 )
 from core.ini_writer import generate_ini_files
-from core.automation import optimize_with_mt5
 from core.state import registry
-
-from report_util.grabber import get_current_xml_path, export_and_confirm_xml
-
+from core.job_runner import build_job_context, xml_exists, run_symbol_optimization
 
 mt5_path = Path(registry.get("install_path", "C:/MT5/terminal64.exe"))
+
 
 def run_optimizations(config_path: Path) -> None:
     logger.info("Run Optimizations triggered.")
     config_json = Path(config_path).read_text(encoding="utf-8")
     config = json.loads(config_json)
 
-    # Extract EA name from path (handle Windows-style backslashes)
     ea_name = config["tester"]["Expert"].split("\\")[-1].split(".")[0]
     run_folder = create_run_folder(ea_name)
 
-    # Save job name to registry for resume support
     job_name = run_folder.name
     registry.set("last_job_name", job_name)
     registry.save()
 
     sink_id = start_run_logger(run_folder)
     logger.info(f"Started new optimization run: {job_name}")
+
     try:
         ini_src = Path(".cache/current_config.ini")
         json_src = Path(".cache/current_config.json")
@@ -43,12 +41,11 @@ def run_optimizations(config_path: Path) -> None:
         dry_run = registry.get("dry_run")
         logger.info(f"Dry run mode: {'ON' if dry_run else 'OFF'}")
 
-        # Generate INI files for each symbol (with or without month splitting)
         ini_count = generate_ini_files(config, run_folder, dry_run=dry_run)
         logger.success(f"Generated {ini_count} INI files.")
 
         if not dry_run:
-            mt5_path = get_mt5_executable_path_from_registry()  
+            mt5_path = get_mt5_executable_path_from_registry()
             log_path = registry.get("tester_log_path")
 
             if not log_path:
@@ -59,29 +56,17 @@ def run_optimizations(config_path: Path) -> None:
                 if not symbol_folder.is_dir():
                     continue
 
-            for ini_file in sorted(symbol_folder.glob("*.ini")):
-                symbol = symbol_folder.name
-                parts = ini_file.stem.split(".", 1)
-                basename = ini_file.stem if len(parts) == 2 else f"{symbol}.{ini_file.stem}"
-                registry.set("current_basename", basename)
-                registry.save()
-                expected_xml = get_current_xml_path()
-                if expected_xml.exists() and expected_xml.stat().st_size > 0:
-                    logger.info(f"✅ Skipping {basename} — XML already exists.")
-                    continue
+                for ini_file in sorted(symbol_folder.glob("*.ini")):
+                    context = build_job_context(ini_file, run_folder)
+                    if xml_exists(context):
+                        logger.info(
+                            f"✅ Skipping {context.basename} — XML already exists."
+                        )
+                        continue
 
-                optimize_with_mt5(
-                    ini_file=ini_file,
-                    mt5_path=mt5_path,
-                    log_path=log_path,
-                    timeout=300
-                )
-
-                success = export_and_confirm_xml()
-                if not success:
-                    logger.warning(f"⚠️ Failed to confirm XML export for: {basename}")
-
-
+                    run_symbol_optimization(
+                        context, mt5_path=mt5_path, log_path=log_path
+                    )
 
     except Exception as e:
         logger.exception(f"Unexpected error during run: {e}")
