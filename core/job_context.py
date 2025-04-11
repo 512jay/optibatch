@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from report_util.grabber import get_current_xml_path
 
 
 @dataclass
@@ -13,8 +12,9 @@ class JobContext:
     run_folder: Path
 
     @property
-    def xml_path(self) -> Path:
-        return get_current_xml_path()
+    def final_xml_path(self) -> Path:
+        return self.run_folder / self.symbol / f"{self.basename}.xml"
+
 
 
 def build_job_context(ini_file: Path, run_folder: Path) -> JobContext:

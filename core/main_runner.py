@@ -27,10 +27,6 @@ def run_optimizations(config_path: Path) -> None:
     ea_name = config["tester"]["Expert"].split("\\")[-1].split(".")[0]
     run_folder = create_run_folder(ea_name)
 
-    job_name = run_folder.name
-    registry.set("last_job_name", job_name)
-    registry.save()
-
     sink_id = start_run_logger(run_folder)
     logger.info(f"Started new optimization run: {job_name}")
 
@@ -72,5 +68,11 @@ def run_optimizations(config_path: Path) -> None:
     except Exception as e:
         logger.exception(f"Unexpected error during run: {e}")
     finally:
+        stop_run_logger(sink_id)
+        logger.info(f"Optimization run complete: {job_name}")
+
+        # Cleanup any leftover .xml reports not moved to job folders
+        from report_util.reporter import clean_orphaned_reports
+        clean_orphaned_reports()
         stop_run_logger(sink_id)
         logger.info(f"Optimization run complete: {job_name}")

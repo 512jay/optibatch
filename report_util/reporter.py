@@ -3,14 +3,52 @@
 from __future__ import annotations
 
 import time
-import logging
 import pyautogui
+import shutil
 from pathlib import Path
-from report_util.cleaner import REPORTS_DIR
 from core.state import registry
-from windows.controller import apply_mt5_window_geometry, find_mt5_window
+from windows.controller import apply_mt5_window_geometry, find_mt5_window, close_mt5_report_window
+from core.job_context import JobContext
+from loguru import logger
 
-logger = logging.getLogger(__name__)
+
+REPORTS_DIR = Path("generated") / "reports"
+
+
+def move_xml_to_job_folder(context: JobContext) -> Path:
+    """
+    Moves the XML report from the shared reports folder (REPORTS_DIR)
+    to the final job-specific folder alongside the .ini file.
+    Returns the new destination path.
+    """
+    src = REPORTS_DIR / f"{context.basename}.xml"
+    dst = context.final_xml_path
+    dst.parent.mkdir(parents=True, exist_ok=True)
+
+    if src.exists():
+        shutil.move(src, dst)
+        logger.success(f"📂 Moved report: {src.name} → {dst}")
+    else:
+        logger.warning(f"⚠️ Expected XML not found in {REPORTS_DIR}: {src.name}")
+
+    return dst
+
+
+def clean_orphaned_reports() -> int:
+    """
+    Deletes any leftover .xml files in the shared reports folder
+    that were not moved after export.
+    Returns the number of files deleted.
+    """
+    deleted = 0
+    for file in REPORTS_DIR.glob("*.xml"):
+        try:
+            file.unlink()
+            deleted += 1
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to delete {file.name}: {e}")
+    logger.info(f"🧽 Cleaned up {deleted} orphaned report(s) in {REPORTS_DIR}")
+    return deleted
 
 
 def export_xml_via_context_menu() -> bool:
@@ -53,26 +91,11 @@ def export_xml_via_context_menu() -> bool:
     return True
 
 
-def get_current_xml_path() -> Path:
-    """
-    Returns the expected XML file path for the currently running optimization,
-    based on 'last_job_name' and 'current_basename' in app_state.
-    """
-    job_name = registry.get("last_job_name")
-    basename = registry.get("current_basename")
-
-    if not job_name or not basename:
-        raise ValueError("Missing 'last_job_name' or 'current_basename' in app state.")
-
-    symbol = basename.split(".", 1)[0]
-    return Path("generated") / job_name / symbol / f"{basename}.xml"
-
-
-def handle_save_dialog(destination: Path) -> None:
+def handle_save_dialog(context: JobContext) -> None:
     """
     Handles the Windows Save dialog: types only the base filename (no path or extension) and confirms save.
     """
-    filename = destination.stem
+    filename = context.basename
     logger.info(f"Typing XML save filename: {filename}")
 
     time.sleep(1.2)  # ⏱️ Wait for the Save dialog to be ready (tweak if still flaky)
@@ -81,12 +104,12 @@ def handle_save_dialog(destination: Path) -> None:
     time.sleep(1)
 
 
-def confirm_export_success(timeout: int = 10) -> bool:
+def confirm_export_success(context: JobContext, timeout: int = 10) -> bool:
     """
     Confirms that the expected XML file was saved successfully.
     Waits up to `timeout` seconds for the file to appear.
     """
-    expected_path = get_current_xml_path()
+    expected_path = context.final_xml_path
     logger.debug(f"Waiting for XML report to be saved: {expected_path}")
 
     for _ in range(timeout * 2):
@@ -99,16 +122,13 @@ def confirm_export_success(timeout: int = 10) -> bool:
     return False
 
 
-def export_and_confirm_xml() -> bool:
-    """
-    Full export flow:
-    1. Brings MT5 to front and applies window geometry
-    2. Right-clicks to trigger 'Export XML'
-    3. Handles the Save dialog with the expected path
-    4. Waits for the XML file to be written and confirms success
-
-    Returns True if export was successful, False otherwise.
-    """
+def export_and_confirm_xml(context: JobContext) -> bool:
     export_xml_via_context_menu()
-    handle_save_dialog(get_current_xml_path())
-    return confirm_export_success()
+    handle_save_dialog(context)
+
+    if confirm_export_success(context):
+        move_xml_to_job_folder(context)
+        close_mt5_report_window()  # ✅ Safe and targeted cleanup
+        return True
+
+    return False

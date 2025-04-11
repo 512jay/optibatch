@@ -5,6 +5,7 @@
 import time
 import json
 import psutil
+import fnmatch
 import win32gui  # type: ignore
 import win32con  # type: ignore
 import win32process  # type: ignore
@@ -131,3 +132,24 @@ def ensure_mt5_ready_for_automation() -> None:
     if hwnd:
         focus_window(hwnd)
         time.sleep(1.0)
+
+
+def close_mt5_report_window() -> None:
+    """
+    Attempts to close the XML report viewer window opened by MT5,
+    without affecting other applications.
+    Looks for windows with *.xml or 'report' in the title.
+    """
+
+    def enum_handler(hwnd: int, windows_to_close: list[int]) -> None:
+        if win32gui.IsWindowVisible(hwnd):
+            title = win32gui.GetWindowText(hwnd)
+            if fnmatch.fnmatch(title.lower(), "*.xml") or "report" in title.lower():
+                windows_to_close.append(hwnd)
+
+    windows_to_close: list[int] = []
+    win32gui.EnumWindows(enum_handler, windows_to_close)
+
+    for hwnd in windows_to_close:
+        win32gui.PostMessage(hwnd, win32con.WM_CLOSE, 0, 0)
+        logger.info(f"🔐 Closed report window: {win32gui.GetWindowText(hwnd)}")
