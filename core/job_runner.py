@@ -10,7 +10,7 @@ from core.job_context import JobContext
 
 
 def xml_exists(context: JobContext) -> bool:
-    path = context.xml_path
+    path = context.final_xml_path
     return path.exists() and path.stat().st_size > 0
 
 

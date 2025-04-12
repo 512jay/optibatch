@@ -1,72 +1,72 @@
+Great — let’s modernize your `README.md` to reflect the full power of OptiBatch as it stands now.
+
+---
+
+## ✅ Key Enhancements to Add
+
+1. **"Continue Previous Job"** logic with `job_config.json`
+2. **Job folder cleanup + XML auto-routing**
+3. **Run skipping if XML already exists**
+4. ✅ Clarify real folder names: `.cache/`, `generated/`, `reports/`
+5. ✅ Mention `job_config.json` and `current_config.json` clearly
+
+---
+
+## ✍️ Updated `README.md`
+
+```markdown
 # 🧠 Optibatch
 
-**Optibatch** is a Python-based GUI tool that simplifies the automation of MT5 strategy optimization using `.ini` Tester configuration files. It enables users to configure, generate, and run backtests and optimizations — with support for multi-symbol strategies and batch management.
+**Optibatch** is a Python-based GUI tool that automates MT5 strategy optimizations using `.ini` Tester configuration files. It supports batch processing, multi-symbol backtests, and job management — all from an intuitive GUI.
 
 ---
 
 ## ✨ Features
 
-- ✅ Easy GUI to configure strategies, symbols, and timeframes
-- 📂 Load existing `.ini` files and auto-populate fields
-- 🖁️ Resume previously saved jobs
-- 🗕️ Built-in date pickers and dropdowns for optimization options
-- 🧪 Generate and save `.ini` files for each symbol in a job
-- 🚀 Run optimizations directly in MT5 with auto-launch
-- 🧹 Organizes jobs by date and label
-- 🗞️ Export results to CSV/HTML
+- ✅ Friendly Tkinter GUI to configure MT5 strategy optimization jobs
+- 📂 Load existing `.ini` files to auto-populate settings
+- 🧠 Resume previous jobs using `job_config.json`
+- 🗃️ Automatically skips symbols with already-exported `.xml` reports
+- 🗃️ `job_config.json` and `.ini` files saved inside each job folder
+- 🗓️ Built-in date pickers for optimization ranges
+- 📈 Supports multi-symbol jobs and discrete monthly splitting
+- 🚀 Auto-launches MT5 with proper config
+- 🧹 Automatically moves exported `.xml` to the correct job/symbol folder
+- 🛠 Supports dry-run mode and safe caching
+- 🧪 Supports `.htm`, `.csv`, and `.xml` reporting (via context menu export)
 
 ---
 
-## 🗂️ Project Structure
+## 🗂️ Project Structure (Simplified)
 
 ```bash
 .
-├── main_app.py              # Tkinter GUI entry point
+├── main_app.py                 # Tkinter GUI entry point
 ├── README.md
-├── settings.json            # MT5 terminal config
-├── cache/                   # Temporary or cached files (e.g., symbol dumps)
-├── jobs/                    # Generated jobs and associated .ini files
-├── exports/                 # Exported backtest results (CSV, HTML)
+├── .cache/                     # Active working config files
+│   ├── current_config.json
+│   └── current_config.ini
+├── generated/                  # Saved job folders (1 per run)
+│   └── <timestamp>_<EA>/      # Includes job_config.json, .ini, and results
+│       ├── job_config.json
+│       ├── <symbol>/
+│           ├── .ini files
+│           └── .xml results
+├── reports/                    # Temporary XML export staging area
+├── settings.json               # MT5 terminal config (required)
 │
-├── core/
-│   ├── jobs/                # Job lifecycle: validation, generation, running
-│   │   ├── generator.py
-│   │   ├── runner.py
-│   │   └── validator.py
-│   ├── mt5/                 # MT5 interaction logic
-│   │   ├── mt5_process.py
-│   │   ├── symbol_dumper.py
-│   │   └── symbol_loader.py
-│
-├── ini_utilities/           # INI loading, writing, formatting
-│   ├── ini_loader.py
-│   ├── ini_writer.py
-│   └── ini_utils.py
-│
-├── helpers/                 # Shared logic and enums
-│   ├── enums.py
-│   └── path_utils.py
-│
-├── state/                   # App-wide state tracking
-│   └── app_state.py
-│
-├── ui/                      # GUI components and widgets
-│   ├── date_picker.py
-│   ├── input_editor.py
-│   └── symbol_picker.py
-│
-└── tests/                   # Pytest-based unit tests
-    └── ini_utilities/
-        ├── test_ini_loader.py
-        └── ...
+├── core/                       # Core logic (job runner, optimizer, state)
+├── ui/                         # Tkinter GUI widgets and layout
+├── report_util/                # XML saving, pathing, file movement
+└── tests/                      # Pytest unit tests
 ```
 
 ---
 
-## 🚀 Running the App
+## 🚀 How to Run
 
 ```bash
-# Activate your virtual environment
+# Activate your venv
 .venv/Scripts/activate
 
 # Launch the GUI
@@ -75,7 +75,18 @@ python main_app.py
 
 ---
 
-## 🧪 Running Tests
+## 🔁 Continue a Previous Job
+
+1. Click **"⏭️ Continue Previous"**
+2. Select a `generated/<job_folder>` that contains `job_config.json`
+3. Optibatch will:
+   - Use the job's existing `.ini` files
+   - Skip symbols with already-exported `.xml` results
+   - Export only what's missing
+
+---
+
+## 🧪 Testing
 
 ```bash
 pytest
@@ -86,36 +97,32 @@ pytest
 ## 🛠 Requirements
 
 - Python 3.11+
-- MT5 installed (path configured in `settings.json`)
-- `psutil`, `tkinter`, `pytest`, `mypy`, etc.
-
----
-
-## 📌 Related Files
-
-- `settings.json`: Stores paths to MT5 terminal and data directories
-- `.gitignore`: Excludes `/cache/`, `.opt` files, and MT5 logs
+- MT5 installed and configured in `settings.json`
+- Dependencies: `psutil`, `pyautogui`, `pytest`, `mypy`, etc.
 
 ---
 
 ## 📌 Notes
 
-- Job configs (`job_*.json`) are saved to `jobs/` with a timestamp and index
-- Generated `.ini` files are UTF-16 encoded and follow MT5 formatting
-- Each job folder may contain multiple `.ini` files (one per symbol)
+- `.xml` reports are saved to `reports/` first, then moved to the job folder
+- Jobs are organized into folders like `generated/20250411_163229_IndyTSL`
+- INI files are saved in UTF-16 (as required by MT5)
+- All paths are dynamically constructed using `pathlib`
 
 ---
 
-## 🧠 Future Plans
+## 🧠 Roadmap
 
-- [ ] CLI version for power users
-- [ ] Job queue with scheduling
-- [ ] Result visualization
-- [ ] Upload jobs to cloud for distributed testing
+- [ ] CLI mode for batch job scripting
+- [ ] Visual dashboard for result tracking
+- [ ] Advanced retry/resume logic
+- [ ] Cloud execution or agent support
 
 ---
 
 ## 👤 Author
 
-Developed by **512jay** for Dharmesh and other algo strategy users.
+Built by **512jay** for Dharmesh and others automating MT5 strategies.
+```
 
+---

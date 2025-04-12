@@ -11,22 +11,25 @@ from core.run_utils import (
     copy_core_files_to_run,
     get_mt5_executable_path_from_registry,
 )
-from core.ini_writer import generate_ini_files
+from core.job_ini_writer import generate_ini_files
 from core.state import registry
 from core.job_runner import xml_exists, run_symbol_optimization
 from core.job_context import build_job_context
+from report_util.reporter import clean_orphaned_reports
 
 mt5_path = Path(registry.get("install_path", "C:/MT5/terminal64.exe"))
 
 
-def run_optimizations(config_path: Path) -> None:
+def run_optimizations(config_path: Path, run_folder: Path | None = None) -> None:
     logger.info("Run Optimizations triggered.")
-    config_json = Path(config_path).read_text(encoding="utf-8")
+    config_json = config_path.read_text(encoding="utf-8")
     config = json.loads(config_json)
 
     ea_name = config["tester"]["Expert"].split("\\")[-1].split(".")[0]
-    run_folder = create_run_folder(ea_name)
 
+    if run_folder is None:
+        run_folder = create_run_folder(ea_name)
+    job_name = run_folder.name
     sink_id = start_run_logger(run_folder)
     logger.info(f"Started new optimization run: {job_name}")
 
@@ -55,10 +58,8 @@ def run_optimizations(config_path: Path) -> None:
 
                 for ini_file in sorted(symbol_folder.glob("*.ini")):
                     context = build_job_context(ini_file, run_folder)
-                    if xml_exists(context):
-                        logger.info(
-                            f"✅ Skipping {context.basename} — XML already exists."
-                        )
+                    if context.report_exists:
+                        logger.info(f"✅ Skipping {context.basename} — XML already exists.")
                         continue
 
                     run_symbol_optimization(
@@ -68,11 +69,8 @@ def run_optimizations(config_path: Path) -> None:
     except Exception as e:
         logger.exception(f"Unexpected error during run: {e}")
     finally:
-        stop_run_logger(sink_id)
         logger.info(f"Optimization run complete: {job_name}")
+        stop_run_logger(sink_id)
 
         # Cleanup any leftover .xml reports not moved to job folders
-        from report_util.reporter import clean_orphaned_reports
         clean_orphaned_reports()
-        stop_run_logger(sink_id)
-        logger.info(f"Optimization run complete: {job_name}")

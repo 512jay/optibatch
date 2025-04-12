@@ -14,10 +14,52 @@ from typing import Optional, Tuple
 from loguru import logger
 from core.state import registry
 from typing import Optional
+import win32api  # type: ignore
 
+SAFE_XML_VIEWERS = {
+    "notepad.exe",
+    "msedge.exe",
+    "chrome.exe",
+    "excel.exe",
+    "explorer.exe",
+    "wordpad.exe",
+    # You can add "terminal64.exe" (MT5) if you decide it's safe
+}
 
 MAX_RETRIES = 5
 RETRY_DELAY_SECONDS = 2
+
+
+def close_mt5_report_window() -> None:
+    """
+    Attempts to close XML report viewer windows opened by known external programs.
+    Only affects windows with .xml in the title and process in a safe list.
+    """
+
+    def enum_handler(hwnd: int, windows_to_close: list[tuple[int, str]]) -> None:
+        if win32gui.IsWindowVisible(hwnd):
+            title = win32gui.GetWindowText(hwnd)
+            if ".xml" in title.lower():
+                try:
+                    _, pid = win32process.GetWindowThreadProcessId(hwnd)
+                    proc = psutil.Process(pid)
+                    exe_name = proc.name().lower()
+                    if exe_name in SAFE_XML_VIEWERS:
+                        windows_to_close.append((hwnd, exe_name))
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+
+    windows_to_close: list[tuple[int, str]] = []
+    win32gui.EnumWindows(enum_handler, windows_to_close)
+
+    for hwnd, exe_name in windows_to_close:
+        try:
+            win32gui.PostMessage(hwnd, win32con.WM_CLOSE, 0, 0)
+            title = win32gui.GetWindowText(hwnd)
+            logger.info(f"🔐 Closed {exe_name} report window: {title}")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to close {exe_name} window: {e}")
+
 
 def load_window_geometry() -> Optional[Tuple[int, int, int, int]]:
     """
@@ -133,23 +175,3 @@ def ensure_mt5_ready_for_automation() -> None:
         focus_window(hwnd)
         time.sleep(1.0)
 
-
-def close_mt5_report_window() -> None:
-    """
-    Attempts to close the XML report viewer window opened by MT5,
-    without affecting other applications.
-    Looks for windows with *.xml or 'report' in the title.
-    """
-
-    def enum_handler(hwnd: int, windows_to_close: list[int]) -> None:
-        if win32gui.IsWindowVisible(hwnd):
-            title = win32gui.GetWindowText(hwnd)
-            if fnmatch.fnmatch(title.lower(), "*.xml") or "report" in title.lower():
-                windows_to_close.append(hwnd)
-
-    windows_to_close: list[int] = []
-    win32gui.EnumWindows(enum_handler, windows_to_close)
-
-    for hwnd in windows_to_close:
-        win32gui.PostMessage(hwnd, win32con.WM_CLOSE, 0, 0)
-        logger.info(f"🔐 Closed report window: {win32gui.GetWindowText(hwnd)}")

@@ -12,7 +12,7 @@ from core.job_context import JobContext
 from loguru import logger
 
 
-REPORTS_DIR = Path("generated") / "reports"
+REPORTS_DIR = Path.cwd() / "reports"
 
 
 def move_xml_to_job_folder(context: JobContext) -> Path:
@@ -105,20 +105,26 @@ def handle_save_dialog(context: JobContext) -> None:
 
 
 def confirm_export_success(context: JobContext, timeout: int = 10) -> bool:
-    """
-    Confirms that the expected XML file was saved successfully.
-    Waits up to `timeout` seconds for the file to appear.
-    """
-    expected_path = context.final_xml_path
+    expected_path = REPORTS_DIR / f"{context.basename}.xml"
     logger.debug(f"Waiting for XML report to be saved: {expected_path}")
 
     for _ in range(timeout * 2):
         if expected_path.exists() and expected_path.stat().st_size > 0:
-            logger.info(f"\u2705 XML report saved: {expected_path}")
+            logger.info(f"✅ XML report saved: {expected_path}")
             return True
         time.sleep(0.5)
 
-    logger.warning(f"\u274c XML report not found after {timeout}s: {expected_path}")
+    # 👇 Add fallback sanity log
+    logger.warning(f"❌ XML report not found after {timeout}s: {expected_path}")
+    if REPORTS_DIR.exists():
+        existing = list(REPORTS_DIR.glob("*.xml"))
+        if existing:
+            logger.warning(
+                "⚠️ XML files found in reports dir (but didn't match expected):"
+            )
+            for f in existing:
+                logger.warning(f" - {f.name}")
+
     return False
 
 
@@ -128,7 +134,8 @@ def export_and_confirm_xml(context: JobContext) -> bool:
 
     if confirm_export_success(context):
         move_xml_to_job_folder(context)
-        close_mt5_report_window()  # ✅ Safe and targeted cleanup
+        time.sleep(1.5)  # ⏱ give the viewer time to open
+        close_mt5_report_window()
         return True
 
     return False

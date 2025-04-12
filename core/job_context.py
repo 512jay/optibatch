@@ -15,6 +15,12 @@ class JobContext:
     def final_xml_path(self) -> Path:
         return self.run_folder / self.symbol / f"{self.basename}.xml"
 
+    @property
+    def report_exists(self) -> bool:
+        """
+        Returns True if the final .xml report exists and is not empty.
+        """
+        return self.final_xml_path.exists() and self.final_xml_path.stat().st_size > 0
 
 
 def build_job_context(ini_file: Path, run_folder: Path) -> JobContext:

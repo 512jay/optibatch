@@ -1,27 +1,29 @@
 # main_app.py
-
 import json
 import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
-from tkinter import filedialog, messagebox, ttk
-from core.enums import get_enum_label, enum_label_map, get_value_for_label
-from core.input_parser import InputParam, parse_ini_inputs
+
+# 🧠 Core logic and state management
+from core.main_runner import run_optimizations
+from core.state import registry
 from core.session import (
-    cache_ini_file,
-    get_cached_ini_file,
-    has_cached_ini,
     save_full_config,
+    has_cached_ini,
+    get_cached_ini_file,
+    cache_ini_file,
     update_json_tester_inputs,
 )
-from ini_utils.loader import parse_ini_file
-from core.session import update_ini_tester_inputs
-from core.state import registry
-from ui.config_loader import load_cached_ui_state
-from ui.edit_inputs_popup import open_edit_inputs_popup
-from ui.ini_loader import load_ini_and_update_ui
+from core.enums import get_enum_label, enum_label_map, get_value_for_label
+from core.input_parser import InputParam, parse_ini_inputs
+
+# 🧩 UI components
 from ui.mt5_menu import build_mt5_menu, update_window_title
 from ui.symbol_picker import open_symbol_picker
-from ui.updaters import populate_ui_from_ini_data
+from ui.ini_loader import load_ini_and_update_ui
+from ui.config_loader import load_cached_ui_state
+from ui.edit_inputs_popup import open_edit_inputs_popup
+from ui.widgets.button_row import build_button_row
 from ui.widgets.date_fields import build_date_fields
 from ui.widgets.ea_inputs import build_inputs_section
 from ui.widgets.header_fields import build_header_fields
@@ -31,54 +33,18 @@ from ui.widgets.optimized_preview import (
 )
 from ui.widgets.strategy_config import build_strategy_config
 from ui.widgets.options_menu import build_options_menu
-from core.main_runner import run_optimizations
+from ui.updaters import populate_ui_from_ini_data
 
-
-def on_run_optimizations_click():
-    config_path = Path(".cache/current_config.json")
-    run_optimizations(config_path)
-
-
-def on_pick_symbol_clicked() -> None:
-    current = symbol_var.get()
-    open_symbol_picker(root, update_symbol_field, preselected=current)
-
-
-def update_symbol_field(new_symbol: str) -> None:
-    symbol_var.set(new_symbol)
-
-
-def on_save_inputs() -> None:
-    try:
-        save_full_config(
-            parsed_strategy_inputs,
-            {
-                "symbol": symbol_var.get(),
-                "timeframe": timeframe_var.get(),
-                "deposit": deposit_var.get(),
-                "currency": currency_var.get(),
-                "leverage": leverage_var.get(),
-                "model": strategy_model_var.get(),
-                "optimization": optimization_mode_var.get(),
-                "result": result_priority_var.get(),
-                "forward": forward_mode_var.get(),
-                "from_date": f'{fromdate_var["year"].get()}.{fromdate_var["month"].get()}.{fromdate_var["day"].get()}',
-                "to_date": f'{todate_var["year"].get()}.{todate_var["month"].get()}.{todate_var["day"].get()}',
-            },
-        )
-        show_toast("Settings saved!")
-    except Exception as e:
-        messagebox.showerror("Error saving settings", str(e))
-
-
+# 🪟 Create the main application window
 root = tk.Tk()
 root.title("Optibatch")
+
+# 🧼 Toast area (for temporary popup messages)
 toast_label = None
-update_window_title(root)
+
 
 def show_toast(message: str, duration: int = 2000) -> None:
     global toast_label
-
     if toast_label is not None:
         toast_label.destroy()
 
@@ -94,19 +60,20 @@ def show_toast(message: str, duration: int = 2000) -> None:
     )
     toast_label.pack()
     toast_label_frame.place(relx=0.5, rely=1.0, anchor="s", y=-10)
-
     root.after(duration, lambda: toast_label_frame.destroy())
 
 
-# Create the top menu bar
+# 🧠 Update the window title with MT5 path
+update_window_title(root)
+
+# 🧭 Build top menu (Options + MT5 integration)
 menubar = tk.Menu(root)
 options_menu, use_discrete_months_var = build_options_menu(menubar)
 menubar.add_cascade(label="Options", menu=options_menu)
-root.config(menu=menubar)
 build_mt5_menu(menubar, root)
 root.config(menu=menubar)
 
-# Layout sections
+# 🔲 Build each main section of the UI
 header_frame = ttk.LabelFrame(root, text="Header")
 header_frame.pack(fill="x", padx=10, pady=(10, 5))
 strategy_frame = ttk.LabelFrame(root, text="Strategy")
@@ -115,41 +82,32 @@ date_frame = ttk.LabelFrame(root, text="Date Range")
 date_frame.pack(fill="x", padx=10, pady=5)
 inputs_frame = ttk.LabelFrame(root, text="Inputs to Optimize")
 inputs_frame.pack(fill="x", padx=10, pady=5)
-buttons_frame = ttk.Frame(root)
-buttons_frame.pack(fill="x", padx=10, pady=10)
 
-# Header fields
+# 🌟 Parseable input parameters (INI strategy inputs)
+parsed_strategy_inputs: list[InputParam] = []
+
+# 🧠 Build all input fields
 header_vars = build_header_fields(header_frame)
+strategy_vars = build_strategy_config(strategy_frame)
+fromdate_var = build_date_fields(date_frame, 0, "From Date")
+todate_var = build_date_fields(date_frame, 1, "To Date")
+optimized_preview = create_optimized_preview_widget(inputs_frame)
+optimized_preview.frame.pack(fill="x", padx=10, pady=(5, 0))
+
+# 🔁 UI helpers
 expert_path_var = header_vars["expert_var"]
 symbol_var = header_vars["symbol_var"]
 deposit_var = header_vars["deposit_var"]
 currency_var = header_vars["currency_var"]
 leverage_var = header_vars["leverage_var"]
-
-report_click_set = tk.StringVar(value="Not Set")
-parsed_strategy_inputs: list[InputParam] = []
-
-# Optimized preview widget
-optimized_preview = create_optimized_preview_widget(inputs_frame)
-optimized_preview.frame.pack(fill="x", padx=10, pady=(5, 0))
-ttk.Button(inputs_frame, text="💾 Save Settings", command=on_save_inputs).pack(
-    pady=(5, 0)
-)
-
-
-# Strategy settings
-strategy_vars = build_strategy_config(strategy_frame)
 timeframe_var = strategy_vars["timeframe_var"]
 strategy_model_var = strategy_vars["strategy_model_var"]
 optimization_mode_var = strategy_vars["optimization_mode_var"]
 result_priority_var = strategy_vars["result_priority_var"]
 forward_mode_var = strategy_vars["forward_mode_var"]
 
-# Date fields
-fromdate_var = build_date_fields(date_frame, 0, "From Date")
-todate_var = build_date_fields(date_frame, 1, "To Date")
 
-
+# 🧠 Helpers to update date fields
 def _split_date(date_str: str) -> dict[str, str]:
     try:
         y, m, d = date_str.split(".")
@@ -168,17 +126,19 @@ def update_dates(f: str, t: str) -> None:
     update_stringvars(todate_var, _split_date(t))
 
 
-def update_optimized_inputs_preview():
+def update_optimized_inputs_preview() -> None:
     update_optimized_preview(optimized_preview, parsed_strategy_inputs)
 
 
-def on_edit_inputs():
+# ✏️ Edit popup logic
+def on_edit_inputs() -> None:
     popup = open_edit_inputs_popup(parsed_strategy_inputs)
-    popup.wait_window()  # ✅ Waits for Save or window close
-    update_optimized_inputs_preview()  # ✅ Now safely refreshes after edit
+    popup.wait_window()
+    update_optimized_inputs_preview()
 
 
-def on_load_ini():
+# 📂 Load INI logic
+def on_load_ini() -> None:
     def after_load(data):
         populate_ui_from_ini_data(
             data,
@@ -206,7 +166,32 @@ def on_load_ini():
     )
 
 
-def on_run_optimizations():
+# 💾 Save inputs to .json and .ini
+def on_save_inputs() -> None:
+    try:
+        save_full_config(
+            parsed_strategy_inputs,
+            {
+                "symbol": symbol_var.get(),
+                "timeframe": timeframe_var.get(),
+                "deposit": deposit_var.get(),
+                "currency": currency_var.get(),
+                "leverage": leverage_var.get(),
+                "model": strategy_model_var.get(),
+                "optimization": optimization_mode_var.get(),
+                "result": result_priority_var.get(),
+                "forward": forward_mode_var.get(),
+                "from_date": f'{fromdate_var["year"].get()}.{fromdate_var["month"].get()}.{fromdate_var["day"].get()}',
+                "to_date": f'{todate_var["year"].get()}.{todate_var["month"].get()}.{todate_var["day"].get()}',
+            },
+        )
+        show_toast("Settings saved!")
+    except Exception as e:
+        messagebox.showerror("Error saving settings", str(e))
+
+
+# 🚀 Run optimizer
+def on_run_optimizations() -> None:
     try:
         run_optimizations(Path(".cache/current_config.json"))
     except Exception as e:
@@ -216,33 +201,12 @@ def on_run_optimizations():
         traceback.print_exc()
 
 
-# UI buttons
-build_inputs_section(inputs_frame, on_edit=on_edit_inputs)
+# ⛏ Hook up symbol picker
+def update_symbol_field(new_symbol: str) -> None:
+    symbol_var.set(new_symbol)
 
 
-# Layout: horizontally packed buttons
-ttk.Button(buttons_frame, text="📂 Load INI", command=on_load_ini).pack(
-    side="left", padx=5
-)
-ttk.Button(buttons_frame, text="✏️ Edit Inputs", command=on_edit_inputs).pack(
-    side="left", padx=5
-)
-ttk.Button(buttons_frame, text="📊 Pick Symbols", command=on_pick_symbol_clicked).pack(
-    side="left", padx=5
-)
-ttk.Button(
-    buttons_frame,
-    text="⏭️ Continue Previous",
-    command=lambda: print("Continue Previous"),
-).pack(side="left", padx=10)
-ttk.Button(
-    buttons_frame,
-    text="🚀 Run Optimizations",
-    command=on_run_optimizations,
-).pack(side="left", padx=5)
-
-
-# Load saved .ini if available
+# 🧩 Load UI state from cache
 load_cached_ui_state(
     parsed_strategy_inputs,
     context={
@@ -262,11 +226,31 @@ load_cached_ui_state(
     on_inputs_loaded=update_optimized_inputs_preview,
 )
 
-def on_app_exit():
+# 📦 Save section and button row
+build_inputs_section(inputs_frame, on_edit=on_edit_inputs)
+
+bottom_frame = ttk.Frame(root)
+bottom_frame.pack(fill="x", padx=10, pady=10)
+
+buttons_frame = build_button_row(
+    parent=bottom_frame,
+    root=root,
+    parsed_inputs=parsed_strategy_inputs,
+    update_symbol_field_cb=lambda: symbol_var.get(),
+    on_edit_inputs=on_edit_inputs,
+    on_load_ini=on_load_ini,
+    on_run_optimizations=on_run_optimizations,
+)
+buttons_frame.pack(fill="x", padx=10, pady=10)
+
+
+# 🚪 Gracefully exit
+def on_app_exit() -> None:
     registry.save()
     root.destroy()
 
 
 root.protocol("WM_DELETE_WINDOW", on_app_exit)
 
+# 🚀 Start the UI
 root.mainloop()

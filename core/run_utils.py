@@ -158,4 +158,4 @@ def copy_core_files_to_run(run_folder: Path, ini_src: Path, json_src: Path) -> N
     for reference or recordkeeping.
     """
     shutil.copy2(ini_src, run_folder / "current_config.ini")
-    shutil.copy2(json_src, run_folder / "current_config.json")
+    shutil.copy2(json_src, run_folder / "job_config.json")
