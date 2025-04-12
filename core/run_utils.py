@@ -112,7 +112,7 @@ def wait_for_mt5_to_finish(timeout: int = 300) -> bool:
             continue
 
         latest_log = logs[0]
-        logger.debug(f"📄 Scanning latest log file: {latest_log.name}")
+        # logger.debug(f"📄 Scanning latest log file: {latest_log.name}")
 
         try:
             with latest_log.open(encoding="utf-16") as f:
