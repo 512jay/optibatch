@@ -214,11 +214,13 @@ buttons_frame = build_button_row(
     parent=bottom_frame,
     root=root,
     parsed_inputs=parsed_strategy_inputs,
-    update_symbol_field_cb=lambda: symbol_var.get(),
+    get_symbol_cb=lambda: symbol_var.get(),
+    set_symbol_cb=lambda value: symbol_var.set(value),
     on_edit_inputs=on_edit_inputs,
     on_load_ini=on_load_ini,
     on_run_optimizations=on_run_optimizations,
 )
+
 buttons_frame.pack(fill="x", padx=10, pady=10)
 
 

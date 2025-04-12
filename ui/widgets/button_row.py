@@ -11,7 +11,8 @@ def build_button_row(
     parent: tk.Widget,
     root: tk.Tk,
     parsed_inputs: list,
-    update_symbol_field_cb,
+    get_symbol_cb,
+    set_symbol_cb,
     on_edit_inputs,
     on_load_ini,
     on_run_optimizations,
@@ -23,8 +24,12 @@ def build_button_row(
     frame = ttk.Frame(parent)
 
     def on_pick_symbols():
-        current = update_symbol_field_cb()
-        open_symbol_picker(root, update_symbol_field_cb, preselected=current)
+        current = get_symbol_cb()
+
+        def handle_selected(symbols: str) -> None:
+            set_symbol_cb(symbols)
+
+        open_symbol_picker(root, handle_selected, preselected=current)
 
     def on_continue_previous():
         job_path = filedialog.askdirectory(
