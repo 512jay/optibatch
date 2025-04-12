@@ -3,6 +3,7 @@
 ```
 JedgeBot/
 │   ├── .cache
+│   │   ├── app_state.json
 │   │   ├── current_config.ini
 │   │   ├── current_config.json
 │   ├── Makefile
@@ -16,11 +17,13 @@ JedgeBot/
 │   ├── check_controller.py
 │   ├── core
 │   │   ├── __init__.py
-│   │   ├── config.py
+│   │   ├── automation.py
 │   │   ├── enums.py
 │   │   ├── ini_generator.py
-│   │   ├── input_hints.py
 │   │   ├── input_parser.py
+│   │   ├── job_context.py
+│   │   ├── job_ini_writer.py
+│   │   ├── job_runner.py
 │   │   ├── jobs_utils
 │   │   │   ├── __init__.py
 │   │   │   ├── forward_utils.py
@@ -30,21 +33,24 @@ JedgeBot/
 │   │   ├── logging
 │   │   │   ├── __init__.py
 │   │   │   ├── logger.py
+│   │   ├── main_runner.py
 │   │   ├── mt5
 │   │   │   ├── __init__.py
 │   │   │   ├── exporter.py
-│   │   │   ├── process.py
 │   │   │   ├── report_exporter.py
 │   │   │   ├── scanner.py
 │   │   │   ├── symbol_dumper.py
 │   │   │   ├── symbol_loader.py
 │   │   │   ├── tester_log_monitor.py
-│   │   ├── registry.py
+│   │   ├── process.py
+│   │   ├── run_utils.py
 │   │   ├── session.py
+│   │   ├── state.py
 │   │   ├── types.py
 │   │   ├── utils
 │   │   │   ├── __init__.py
 │   │   │   ├── io.py
+│   │   ├── validation.py
 │   ├── data
 │   │   ├── 1 min OHLC.ini
 │   │   ├── 1min.ini
@@ -59,11 +65,27 @@ JedgeBot/
 │   │   ├── math calculations.ini
 │   │   ├── mt5_registry.json
 │   │   ├── open prices only.ini
+│   │   ├── optibatch_config.schema.json
 │   │   ├── optimization mapping
 │   │   │   ├── All symbols selected in MarketWatch.ini
 │   │   │   ├── Disabled.ini
 │   │   │   ├── Fast genetic based algorithm.ini
 │   │   │   ├── Slow complete algorithm.ini
+│   ├── database
+│   │   ├── __init__.py
+│   │   ├── export
+│   │   │   ├── ini_writer.py
+│   │   ├── ingest
+│   │   │   ├── ingest_job.py
+│   │   ├── init_db.py
+│   │   ├── models.py
+│   │   ├── session.py
+│   ├── dev
+│   │   ├── check_db_writer.py
+│   │   ├── check_ingest.py
+│   │   ├── tools
+│   │   │   ├── check_connection.py
+│   │   │   ├── query.py
 │   ├── docs
 │   │   ├── _current_project_structure.md
 │   ├── example.ini
@@ -90,6 +112,15 @@ JedgeBot/
 │   │   ├── IndyTSL.EURUSD.H1.20240501_20250402.001.opt.xml
 │   │   ├── IndyTSL.EURUSD.H1.20250101_20250407.004_main.xml
 │   │   ├── testers
+│   ├── generated
+│   │   ├── 20250412_002932_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.xml
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
 │   ├── helpers
 │   │   ├── __init__.py
 │   │   ├── enums.py
@@ -110,58 +141,23 @@ JedgeBot/
 │   │   ├── __init__.py
 │   │   ├── formatter.py
 │   │   ├── loader.py
-│   │   ├── writer.py
-│   ├── jobs
-│   │   ├── job_20250408_001.json
-│   │   │   ├── job_20250408_001.json
-│   │   │   │   ├── IndyTSL.EURAUD.H1.20250101_20250402.001.ini
-│   │   │   │   ├── IndyTSL.EURCAD.H1.20250101_20250402.002.ini
-│   │   │   │   ├── IndyTSL.EURCHF.H1.20250101_20250402.003.ini
-│   │   │   ├── job_20250408_001.json.json
-│   │   ├── job_20250408_002.json
-│   │   │   ├── job_20250408_002.json
-│   │   │   │   ├── IndyTSL.USDCNH.H1.20250101_20250402.001.ini
-│   │   │   │   ├── IndyTSL.USDMXN.H1.20250101_20250402.002.ini
-│   │   │   │   ├── IndyTSL.USDNOK.H1.20250101_20250402.003.ini
-│   │   │   ├── job_20250408_002.json.json
-│   │   ├── job_20250408_003.json
-│   │   │   ├── job_20250408_003.json
-│   │   │   │   ├── IndyTSL.CADCHF.H1.20250408_20250408.001.ini
-│   │   │   │   ├── IndyTSL.CADJPY.H1.20250408_20250408.002.ini
-│   │   │   │   ├── IndyTSL.CHFJPY.H1.20250408_20250408.003.ini
-│   │   │   ├── job_20250408_003.json.json
-│   │   ├── job_20250408_004.json
-│   │   │   ├── job_20250408_004.json
-│   │   │   │   ├── IndyTSL.XAGUSD.H1.20250101_20250402.001.ini
-│   │   │   │   ├── IndyTSL.XAUUSD.H1.20250101_20250402.002.ini
-│   │   │   │   ├── IndyTSL.XPDUSD.H1.20250101_20250402.003.ini
-│   │   │   ├── job_20250408_004.json.json
-│   │   ├── job_20250408_005.json
-│   │   │   ├── job_20250408_005.json
-│   │   │   │   ├── IndyTSL.AVAUSD.H1.20250101_20250402.001.ini
-│   │   │   │   ├── IndyTSL.BATUSD.H1.20250101_20250402.002.ini
-│   │   │   │   ├── IndyTSL.BCHUSD.H1.20250101_20250402.003.ini
-│   │   │   ├── job_20250408_005.json.json
-│   │   ├── job_20250408_006.json
-│   │   │   ├── job_20250408_006.json
-│   │   │   │   ├── IndyTSL.EURUSD.H1.20240408_20250408.001.ini
-│   │   │   ├── job_20250408_006.json.json
-│   │   ├── job_20250408_007.json
-│   │   │   ├── job_20250408_007.json
-│   │   │   │   ├── IndyTSL.EURUSD.H1.20250101_20250408.001.ini
-│   │   │   ├── job_20250408_007.json.json
 │   ├── logs
 │   ├── main_app.py
 │   ├── main_app.spec
 │   ├── mt5
 │   │   ├── __init__.py
 │   │   ├── controller.py
+│   ├── optibatch.bat
 │   ├── pyproject.toml
 │   ├── pytest.ini
+│   ├── report_util
+│   │   ├── job_summary.py
+│   │   ├── reporter.py
+│   ├── reports
 │   ├── requirements.txt
 │   ├── robot.ico
 │   ├── robot.png
-│   ├── settings.json
+│   ├── steam_lit.py
 │   ├── tests
 │   │   ├── __init__.py
 │   │   ├── core
@@ -170,17 +166,22 @@ JedgeBot/
 │   │   │   │   ├── __init__.py
 │   │   │   │   ├── test_log_utils.py
 │   │   ├── example.ini
+│   │   ├── ini_utils
 │   │   ├── test_dummy.py
 │   │   ├── ui
 │   │   │   ├── __init__.py
 │   │   │   ├── test_updaters.py
 │   ├── titles.py
 │   ├── trash
-│   │   ├── date_picker.py
-│   ├── ui
-│   │   ├── __init__.py
 │   │   ├── actions
 │   │   │   ├── ini_buttons.py
+│   │   ├── config.py
+│   │   ├── date_picker.py
+│   │   ├── input_hints.py
+│   │   ├── registry.py
+│   │   ├── writer.py
+│   ├── ui
+│   │   ├── __init__.py
 │   │   ├── config_loader.py
 │   │   ├── edit_inputs_popup.py
 │   │   ├── ini_loader.py
@@ -191,11 +192,15 @@ JedgeBot/
 │   │   ├── symbols.txt
 │   │   ├── updaters.py
 │   │   ├── widgets
+│   │   │   ├── button_row.py
 │   │   │   ├── date_fields.py
 │   │   │   ├── ea_inputs.py
 │   │   │   ├── header_fields.py
 │   │   │   ├── optimized_preview.py
+│   │   │   ├── options_menu.py
 │   │   │   ├── strategy_config.py
 │   ├── visualize_mt5.py
+│   ├── windows
+│   │   ├── controller.py
 │   ├── x_generate_structure.py
 ```

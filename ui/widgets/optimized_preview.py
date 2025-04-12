@@ -3,33 +3,34 @@
 import tkinter as tk
 from tkinter import ttk
 from core.input_parser import InputParam
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Callable
 from math import ceil
 
 
 class OptimizedPreview(NamedTuple):
     frame: tk.Frame
     tree: ttk.Treeview
+    save_button: ttk.Button
 
 
-def create_optimized_preview_widget(parent: tk.Widget) -> OptimizedPreview:
+def create_optimized_preview_widget(
+    parent: tk.Widget,
+    on_save_click: Optional[Callable[[], None]] = None,
+) -> OptimizedPreview:
     frame = tk.Frame(parent)
     frame.grid_rowconfigure(0, weight=1)
     frame.grid_columnconfigure(0, weight=1)
 
-    # Set a more readable row height for Treeview
+    # Treeview styling
     style = ttk.Style()
     style.configure("Treeview", rowheight=28, font=("Segoe UI", 10))
     style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"))
 
-
     columns = ("default", "start", "step", "stop")
-
     tree = ttk.Treeview(frame, columns=columns, show="tree headings")
 
     tree.heading("#0", text="Name", anchor="w")
     tree.column("#0", anchor="w", width=200, stretch=True)
-
     for col in columns:
         tree.heading(col, text=col.capitalize())
         tree.column(col, anchor="center", width=100, stretch=True)
@@ -40,10 +41,16 @@ def create_optimized_preview_widget(parent: tk.Widget) -> OptimizedPreview:
     scrollbar.grid(row=0, column=1, sticky="ns")
     tree.config(yscrollcommand=scrollbar.set)
 
-    # Bind double-click to enable editing
     tree.bind("<Double-1>", lambda event: edit_cell(tree, event))
 
-    return OptimizedPreview(frame=frame, tree=tree)
+    # 💾 Save Button
+    save_button = ttk.Button(frame, text="💾 Save Inputs")
+    save_button.grid(row=1, column=0, columnspan=2, sticky="e", padx=10, pady=5)
+
+    if on_save_click:
+        save_button.config(command=on_save_click)
+
+    return OptimizedPreview(frame=frame, tree=tree, save_button=save_button)
 
 
 def count_variants(inputs: list[InputParam]) -> int:
