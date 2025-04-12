@@ -1,3 +1,5 @@
+# ui/symbol_picker.py
+
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
@@ -35,7 +37,7 @@ def open_symbol_picker(root, on_save_callback, preselected=None):
     all_listbox.pack(side="left", fill="both", expand=True)
     update_listbox(all_listbox, symbols)
 
-    selected_listbox = tk.Listbox(frame)
+    selected_listbox = tk.Listbox(frame, selectmode="extended")
     selected_listbox.pack(side="left", fill="both", expand=True)
     for s in selected_symbols:
         selected_listbox.insert("end", s)
@@ -46,6 +48,12 @@ def open_symbol_picker(root, on_save_callback, preselected=None):
         update_listbox(all_listbox, filtered)
 
     search_var.trace_add("write", filter_list)
+
+    # Double-click bindings
+    all_listbox.bind(
+        "<Double-Button-1>", lambda e: move_items(all_listbox, selected_listbox)
+    )
+    selected_listbox.bind("<Double-Button-1>", lambda e: remove_items(selected_listbox))
 
     # Buttons
     controls = tk.Frame(window)
@@ -69,17 +77,27 @@ def open_symbol_picker(root, on_save_callback, preselected=None):
     ).grid(row=1, column=1)
     tk.Button(
         controls,
+        text="Select All",
+        command=lambda: select_all(all_listbox),
+    ).grid(row=2, column=0)
+    tk.Button(
+        controls,
+        text="Clear All",
+        command=lambda: selected_listbox.delete(0, "end"),
+    ).grid(row=2, column=1)
+    tk.Button(
+        controls,
         text="Save",
         command=lambda: save_selection(
             window, selected_listbox, sort_var.get(), on_save_callback
         ),
-    ).grid(row=2, column=0)
-    tk.Button(controls, text="Cancel", command=window.destroy).grid(row=2, column=1)
+    ).grid(row=3, column=0)
+    tk.Button(controls, text="Cancel", command=window.destroy).grid(row=3, column=1)
     tk.Button(
         controls,
         text="📁 Pick Symbol List File",
         command=lambda: pick_custom_file(window, all_listbox),
-    ).grid(row=3, column=0, columnspan=2)
+    ).grid(row=4, column=0, columnspan=2)
 
 
 def update_listbox(listbox, items):
@@ -98,6 +116,10 @@ def move_items(source, target):
 def remove_items(listbox):
     for i in reversed(listbox.curselection()):
         listbox.delete(i)
+
+
+def select_all(listbox):
+    listbox.select_set(0, "end")
 
 
 def save_selection(window, listbox, sort, callback):
