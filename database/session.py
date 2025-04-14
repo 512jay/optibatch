@@ -1,18 +1,11 @@
 # File: database/session.py
-# Purpose: Manage SQLAlchemy engine and session creation for OptiBatch
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
-import os
-from dotenv import load_dotenv
+from settings import DATABASE_URL
 
-load_dotenv()
-
-# You can use an environment variable for production vs dev
-DB_URL = os.getenv("DATABASE_URL", "")
-
-_engine = create_engine(DB_URL, echo=False, future=True)
+_engine = create_engine(DATABASE_URL, echo=False, future=True)
 _SessionLocal = sessionmaker(
     bind=_engine, autoflush=False, autocommit=False, future=True
 )

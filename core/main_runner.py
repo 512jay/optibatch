@@ -1,23 +1,23 @@
 # File: core/main_runner.py
 
-from pathlib import Path
 import json
 import time
+from datetime import datetime
+from pathlib import Path
+
 from loguru import logger
 
+from core.job_context import build_job_context
+from core.job_ini_writer import generate_ini_files
+from core.job_runner import run_symbol_optimization, xml_exists
 from core.logging.logger import start_run_logger, stop_run_logger
 from core.run_utils import (
-    create_run_folder,
     copy_core_files_to_run,
+    create_run_folder,
     get_mt5_executable_path_from_registry,
 )
-from core.job_ini_writer import generate_ini_files
 from core.state import registry
-from core.job_runner import xml_exists, run_symbol_optimization
-from core.job_context import build_job_context
 from report_util.reporter import clean_orphaned_reports
-
-mt5_path = Path(registry.get("install_path", "C:/MT5/terminal64.exe"))
 
 
 def run_optimizations(config_path: Path, run_folder: Path | None = None) -> None:
@@ -57,14 +57,20 @@ def run_optimizations(config_path: Path, run_folder: Path | None = None) -> None
                     continue
 
                 for ini_file in sorted(symbol_folder.glob("*.ini")):
-                    context = build_job_context(ini_file, run_folder)
+                    context = build_job_context(
+                        ini_file=ini_file,
+                        run_folder=run_folder,
+                        log_dir=Path(log_path),
+                        timestamp_before=datetime.now(),
+                        mt5_path=mt5_path,
+                    )
                     if context.report_exists:
-                        logger.info(f"✅ Skipping {context.basename} — XML already exists.")
+                        logger.info(
+                            f"✅ Skipping {context.basename} — XML already exists."
+                        )
                         continue
 
-                    run_symbol_optimization(
-                        context, mt5_path=mt5_path, log_path=log_path
-                    )
+                    run_symbol_optimization(context)
 
     except Exception as e:
         logger.exception(f"Unexpected error during run: {e}")

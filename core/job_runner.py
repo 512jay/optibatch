@@ -8,20 +8,15 @@ from loguru import logger
 from core.job_context import JobContext
 
 
-
 def xml_exists(context: JobContext) -> bool:
     path = context.final_xml_path
     return path.exists() and path.stat().st_size > 0
 
 
-def run_symbol_optimization(
-    context: JobContext, mt5_path: Path, log_path: Path, timeout: int = 300
-) -> bool:
+def run_symbol_optimization(context: JobContext, timeout: int = 300) -> bool:
     logger.info(f"Running optimization for {context.basename}")
 
-    success = optimize_with_mt5(
-        ini_file=context.ini_file, mt5_path=mt5_path, log_path=log_path, timeout=timeout
-    )
+    success = optimize_with_mt5(context, timeout=timeout)
 
     if not success:
         logger.warning(f"⚠️ MT5 optimization failed or timed out for {context.basename}")

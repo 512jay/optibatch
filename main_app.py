@@ -24,6 +24,7 @@ from ui.widgets.optimized_preview import (
 )
 from ui.widgets.strategy_config import build_strategy_config
 from ui.widgets.options_menu import build_options_menu
+from ui.database_menu import build_database_menu
 from ui.updaters import populate_ui_from_ini_data
 
 # UI setup
@@ -54,10 +55,20 @@ def show_toast(message: str, duration: int = 2000) -> None:
 
 update_window_title(root)
 menubar = tk.Menu(root)
+
+# Options
 options_menu, use_discrete_months_var = build_options_menu(menubar)
 menubar.add_cascade(label="Options", menu=options_menu)
+
+# Database
+database_menu = build_database_menu(root)
+menubar.add_cascade(label="Database", menu=database_menu)
+
+# MT5
 build_mt5_menu(menubar, root)
+
 root.config(menu=menubar)
+
 
 # Build UI sections
 header_frame = ttk.LabelFrame(root, text="Header")

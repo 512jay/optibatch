@@ -5,7 +5,7 @@
     "Symbol": "EURUSD",
     "Period": "H1",
     "Optimization": 1,
-    "Model": "1",
+    "Model": "4",
     "FromDate": "2023.03.01",
     "ToDate": "2023.05.31",
     "ForwardMode": 0,
