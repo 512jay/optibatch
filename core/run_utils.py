@@ -24,24 +24,43 @@ def get_mt5_executable_path_from_registry() -> Path:
     return base_path / "terminal64.exe"
 
 
-def launch_mt5_with_ini(context: JobContext, delay: int = 5) -> None:
+def launch_mt5_with_ini(context: JobContext) -> None:
     """
-    Launches MT5 with the given JobContext's .ini file, and waits for log signal.
+    Launches MT5 with a specific INI config file and waits for it to finish.
+    Raises RuntimeError if MT5 fails to start or finish properly.
     """
-    if not context.mt5_path.exists():
-        raise FileNotFoundError(f"MT5 executable not found: {context.mt5_path}")
-    if not context.ini_file.exists():
-        raise FileNotFoundError(f"INI file not found: {context.ini_file}")
+    ini_path = context.ini_file
+    mt5_path = context.mt5_path
+    log_path = context.log_path
+    timeout = context.timeout or 300
 
-    logger.debug(f"Launching MT5: {context.mt5_path} /config:{context.ini_file}")
-    subprocess.Popen([str(context.mt5_path), f"/config:{str(context.ini_file)}"])
+    logger.info(f"🔧 Launching MT5 with INI: {ini_path}")
+    logger.info(f"MT5 executable: {mt5_path}")
+    logger.info(f"Expected log path: {log_path}")
+    logger.info(f"Waiting timeout: {timeout} seconds")
 
-    logger.debug(f"Waiting {delay} seconds for MT5 to launch...")
-    time.sleep(delay)
+    if not ini_path.exists():
+        raise FileNotFoundError(f"❌ INI file not found: {ini_path}")
+    if not mt5_path.exists():
+        raise FileNotFoundError(f"❌ MT5 path not found: {mt5_path}")
 
-    success = wait_for_mt5_to_finish(
-        log_dir=context.log_dir, timestamp_before=context.timestamp_before
+    timestamp_before = datetime.datetime.now()
+
+    # Launch MT5 subprocess
+    subprocess.Popen(
+        [str(mt5_path), f"/config:{ini_path}"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
+
+    # Small delay to let MT5 open
+    time.sleep(3)
+
+    # Now monitor the logs
+    success = wait_for_mt5_to_finish(
+        timestamp_before=timestamp_before, timeout=timeout, log_path=log_path
+    )
+
     if not success:
         raise RuntimeError("❌ MT5 optimization failed or skipped.")
 
@@ -91,60 +110,41 @@ def get_latest_log_path(log_folder: str | Path) -> Path | None:
     return log_files[0] if log_files else None
 
 
-def wait_for_mt5_to_finish(log_dir: Path, *, timestamp_before: datetime, timeout: float = 60.0) -> bool:
+def wait_for_mt5_to_finish(
+    timestamp_before: datetime.datetime,
+    timeout: int = 300,
+    log_path: Optional[Path] = None,
+) -> bool:
     """
-    Waits for MT5 to finish optimization by watching log files.
-    Only considers logs modified after timestamp_before.
+    Monitor the MT5 tester logs for a completion marker after the given timestamp.
+    Returns True if optimization finishes, False on timeout.
     """
     start_time = time.time()
-    seen_finish = False
-    seen_already_processed = False
+    log_file = log_path or DEFAULT_MT5_LOG_PATH
 
-    def get_recent_logs():
-        return [
-            f for f in sorted(log_dir.glob("*.log"), reverse=True)
-            if f.stat().st_mtime > timestamp_before.timestamp()
-        ]
-
-    logger.debug(f"⏳ Watching MT5 tester logs in: {log_dir}")
+    logger.info(f"🕵️ Monitoring MT5 log: {log_file}")
 
     while time.time() - start_time < timeout:
-        fresh_logs = get_recent_logs()
-        if not fresh_logs:
-            time.sleep(1)
+        time.sleep(2)
+        if not log_file.exists():
             continue
 
-        for log_file in fresh_logs:
-            try:
-                lines = log_file.read_text(encoding="utf-16", errors="ignore").splitlines()
-            except Exception as e:
-                logger.warning(f"⚠️ Could not read {log_file.name}: {e}")
-                continue
+        with open(log_file, "r", encoding="utf-16") as f:
+            lines = f.readlines()
 
-            for line in lines:
-                if "optimization finished" in line.lower():
-                    seen_finish = True
-                    break
-                if "optimization already processed" in line.lower():
-                    seen_already_processed = True
-                    break
+        recent_lines = [
+            line for line in lines if is_after_timestamp(line, timestamp_before)
+        ]
 
-            if seen_finish or seen_already_processed:
-                break
+        for line in recent_lines:
+            if "optimization finished" in line.lower():
+                logger.info("✅ Optimization finished detected in logs.")
+                return True
+            if "optimization already processed" in line.lower():
+                logger.info("⚠️ Optimization already processed detected.")
+                return True
 
-        if seen_finish or seen_already_processed:
-            break
-
-        time.sleep(1)
-
-    if seen_finish:
-        logger.success("✅ MT5 log indicates optimization finished.")
-        return True
-    if seen_already_processed:
-        logger.warning("⚠️ MT5 skipped optimization (already processed). Consider clearing .opt file.")
-        return False
-
-    logger.error("❌ Timeout waiting for MT5 optimization to finish.")
+    logger.warning("⏳ Timeout reached without success marker in logs.")
     return False
 
 

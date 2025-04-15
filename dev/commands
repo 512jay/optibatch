@@ -2,3 +2,6 @@
 
 streamlit run dev/tools/streamlit_dashboard.py
 
+pyinstaller main_app.spec
+
+
