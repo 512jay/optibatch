@@ -1,15 +1,15 @@
 {
   "path": ".cache\\current_config.ini",
   "tester": {
-    "Expert": "Shared Projects\\IndyTSL\\IndyTSL.ex5",
-    "Symbol": "CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,EURCHF,EURGBP",
+    "Expert": "Shared Projects\\IndyTSL\\IndyTSL_v2_0.ex5",
+    "Symbol": "EURUSD,GBPUSD",
     "Period": "H1",
     "Optimization": 1,
     "Model": "1",
-    "FromDate": "2025.01.01",
-    "ToDate": "2025.05.31",
+    "FromDate": "2020.06.01",
+    "ToDate": "2020.06.30",
     "ForwardMode": 0,
-    "Deposit": "10000",
+    "Deposit": "1000",
     "Currency": "USD",
     "ProfitInPips": "0",
     "Leverage": "100",
@@ -29,7 +29,7 @@
       "name": "input_LongStopLossPercent",
       "default": "0.2",
       "start": "0.2",
-      "step": "0.20000",
+      "step": "0.05",
       "end": "2.000000",
       "optimize": true
     },
@@ -37,16 +37,16 @@
       "name": "input_ShortStopLossPercent",
       "default": "0.2",
       "start": "0.2",
-      "step": "0.20000",
+      "step": "0.05",
       "end": "2.000000",
       "optimize": true
     },
     "input_LongTakeProfitPercent": {
       "name": "input_LongTakeProfitPercent",
-      "default": "0.2",
-      "start": "0.2",
-      "step": ".2",
-      "end": "2",
+      "default": "0.0",
+      "start": "0.0",
+      "step": "0.000000",
+      "end": "0.000000",
       "optimize": false
     },
     "input_ShortTakeProfitPercent": {

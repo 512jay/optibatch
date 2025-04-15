@@ -16,10 +16,20 @@ from database.session import get_engine, get_session
 from loguru import logger
 
 
+import re
+
+
 def extract_strategy_version(expert_path: str) -> str | None:
-    """Extract version number from EA filename like IndyTSL_v1_3_0.ex5"""
-    match = re.search(r"_v(\d+[_\.]\d+[_\.]?\d*)", expert_path)
+    """
+    Extracts the strategy version from an expert filename.
+    Supports formats like:
+    - IndyTSL_v2.ex5
+    - IndyTSL_v1_3_0.ex5
+    - IndyTSL_v2.1.4.ex5
+    """
+    match = re.search(r"_v(\d+(?:[_\.]\d+)*)", expert_path)
     if match:
+        # Normalize underscores to dots for consistent version formatting
         return match.group(1).replace("_", ".")
     return None
 
