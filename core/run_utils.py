@@ -3,13 +3,14 @@
 import re
 import subprocess
 import time
+from typing import Optional
 from datetime import datetime
 from pathlib import Path
 from loguru import logger
 from core.state import registry
 from windows.controller import apply_mt5_window_geometry
 from core.job_context import JobContext
-
+import shutil
 
 # ==========================
 # MT5 Launching Utilities
@@ -31,8 +32,10 @@ def launch_mt5_with_ini(context: JobContext) -> None:
     """
     ini_path = context.ini_file
     mt5_path = context.mt5_path
-    log_path = context.log_path
-    timeout = context.timeout or 300
+    log_dir = context.log_dir
+    log_path = get_latest_log_path(log_dir)
+
+    timeout = 3000
 
     logger.info(f"🔧 Launching MT5 with INI: {ini_path}")
     logger.info(f"MT5 executable: {mt5_path}")
@@ -44,7 +47,7 @@ def launch_mt5_with_ini(context: JobContext) -> None:
     if not mt5_path.exists():
         raise FileNotFoundError(f"❌ MT5 path not found: {mt5_path}")
 
-    timestamp_before = datetime.datetime.now()
+    timestamp_before = datetime.now()
 
     # Launch MT5 subprocess
     subprocess.Popen(
@@ -57,9 +60,7 @@ def launch_mt5_with_ini(context: JobContext) -> None:
     time.sleep(3)
 
     # Now monitor the logs
-    success = wait_for_mt5_to_finish(
-        timestamp_before=timestamp_before, timeout=timeout, log_path=log_path
-    )
+    success = wait_for_mt5_to_finish(context, timeout=timeout)
 
     if not success:
         raise RuntimeError("❌ MT5 optimization failed or skipped.")
@@ -111,32 +112,40 @@ def get_latest_log_path(log_folder: str | Path) -> Path | None:
 
 
 def wait_for_mt5_to_finish(
-    timestamp_before: datetime.datetime,
-    timeout: int = 300,
-    log_path: Optional[Path] = None,
+    context: JobContext,
+    timeout: int = 3000,
 ) -> bool:
     """
-    Monitor the MT5 tester logs for a completion marker after the given timestamp.
-    Returns True if optimization finishes, False on timeout.
+    Monitors MT5 log file for success markers, using the context's log_dir.
     """
-    start_time = time.time()
-    log_file = log_path or DEFAULT_MT5_LOG_PATH
+    log_path = get_latest_log_path(context.log_dir)
+    if not log_path:
+        raise FileNotFoundError("❌ Could not locate latest .log file in log_dir.")
 
-    logger.info(f"🕵️ Monitoring MT5 log: {log_file}")
+    timestamp_before = context.timestamp_before
+    start_time = time.time()
+    seen_lines = set()
+
+    logger.info(f"🕵️ Monitoring MT5 log: {log_path}")
 
     while time.time() - start_time < timeout:
         time.sleep(2)
-        if not log_file.exists():
+
+        if not log_path.exists():
             continue
 
-        with open(log_file, "r", encoding="utf-16") as f:
+        mtime = datetime.fromtimestamp(log_path.stat().st_mtime)
+        if mtime <= timestamp_before:
+            continue
+
+        with open(log_path, "r", encoding="utf-16") as f:
             lines = f.readlines()
 
-        recent_lines = [
-            line for line in lines if is_after_timestamp(line, timestamp_before)
-        ]
+        for line in lines:
+            if line in seen_lines:
+                continue
+            seen_lines.add(line)
 
-        for line in recent_lines:
             if "optimization finished" in line.lower():
                 logger.info("✅ Optimization finished detected in logs.")
                 return True
@@ -151,9 +160,6 @@ def wait_for_mt5_to_finish(
 # ==========================
 # Run Management Utilities
 # ==========================
-
-from datetime import datetime
-import shutil
 
 
 def create_run_folder(ea_name: str) -> Path:

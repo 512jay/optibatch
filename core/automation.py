@@ -21,9 +21,7 @@ def optimize_with_mt5(job: JobContext, timeout: int = 7200) -> bool:
     launch_mt5_with_ini(job)
 
     logger.info(f"Waiting for MT5 to finish: {job.ini_file.name}")
-    success = wait_for_mt5_to_finish(
-        log_dir=job.log_dir, timestamp_before=job.timestamp_before, timeout=timeout
-    )
+    success = wait_for_mt5_to_finish(job, timeout=timeout)
 
     if success:
         logger.success(f"MT5 optimization completed: {job.ini_file.name}")
