@@ -59,7 +59,10 @@ def extract_job_metadata(config_path: Path) -> dict:
     return {
         "expert_name": Path(tester["Expert"]).stem,
         "expert_path": tester["Expert"],
-        "modeling_mode": tester["Model"],
+        "model": str(tester.get("Model", "0")),
+        "period": str(tester.get("Period", "")),  # ✅ add this
+        "optimization_mode": str(tester.get("Optimization", "")),  # ✅ add this
+        "optimization_criterion": str(tester.get("OptimizationCriterion", "")),
         "deposit": float(tester["Deposit"]),
         "currency": tester["Currency"],
         "leverage": tester["Leverage"],
@@ -130,68 +133,111 @@ def extract_runs_from_xml(xml_path: Path) -> list[dict]:
     return results
 
 
-def ingest_job_folder(folder: Path, job_id: str | None = None) -> None:
-    logger.info(f"📂 Ingesting job folder: {folder.resolve()}")
-    config_path = folder / "job_config.json"
-    xml_files = list(folder.rglob("*.xml"))
+def ingest_job_folder(folder: Path) -> int:
+    """
+    Ingest all XML result files in a job folder (generated/YYYYMMDD_HHMMSS_NAME).
 
-    logger.info(f"🔍 job_config.json exists? {config_path.exists()}")
-    logger.info(f"📄 Found XML files: {[f.relative_to(folder) for f in xml_files]}")
-
-    if not config_path.exists():
-        raise FileNotFoundError(f"job_config.json missing in {folder}")
-    if not xml_files:
-        raise FileNotFoundError(f"No .xml files found in {folder}")
-
-    job_meta = extract_job_metadata(config_path)
-    job_id = job_id or datetime.now().strftime("%Y%m%d-%H%M%S")
-
+    Automatically creates the Job record and commits all runs.
+    """
     engine = get_engine()
+    config_path = folder / "job_config.json"
+    job_id = folder.name
+    total_runs = 0
+
     with get_session(engine) as session:
-        job = Job(id=job_id, job_name=job_id, created_at=datetime.utcnow(), **job_meta)
-        session.add(job)
+        # Create Job record if missing
+        from database.models import Job
 
-        total_runs = 0
-        for xml_file in xml_files:
-            symbol, start_date, end_date, run_month = extract_symbol_and_dates_from_xml(
-                xml_file
+        if not session.get(Job, job_id):
+            job_meta = extract_job_metadata(config_path)
+            job = Job(
+                id=job_id, job_name=job_id, created_at=datetime.utcnow(), **job_meta
             )
-            raw_runs = extract_runs_from_xml(xml_file)
+            session.add(job)
+            logger.info(f"📋 Created job record for {job_id}")
 
-            for record in raw_runs:
-                inputs = {k: v for k, v in record.items() if k.startswith("input_")}
-                metrics = {
-                    "profit": float(record.get("Profit", 0)),
-                    "drawdown": float(record.get("Drawdown", 0)),
-                    "sharpe_ratio": float(record.get("Sharpe Ratio", 0)),
-                    "trades": int(record.get("Trades", 0)),
-                }
-
-                run = Run(
-                    job_id=job.id,
-                    symbol=symbol,
-                    timeframe=job_meta["modeling_mode"],
-                    start_date=start_date,
-                    end_date=end_date,
-                    run_month=run_month,
-                    is_full_month=is_discrete_month(start_date, end_date),
-                    pass_number=int(record["pass_number"]),
-                    params_json=inputs,
-                    result_hash=generate_result_hash(
-                        symbol,
-                        job_meta["modeling_mode"],
-                        start_date,
-                        end_date,
-                        inputs,
-                        metrics,
-                    ),
-                    created_at=datetime.utcnow(),
-                    **metrics,
-                )
-                session.add(run)
-                total_runs += 1
+        # Loop over XMLs and ingest
+        for xml_file in folder.rglob("*.xml"):
+            added = ingest_single_xml(
+                xml_file, config_path, session=session, job_id=job_id
+            )
+            logger.info(f"📥 Ingested {added} runs from {xml_file.name}")
+            total_runs += added
 
         session.commit()
-        logger.success(
-            f"✅ Imported {len(xml_files)} XML file(s), {total_runs} runs into job {job_id}"
+
+    logger.success(f"✅ Ingested {total_runs} runs from job: {job_id}")
+    return total_runs
+
+
+def ingest_single_xml(
+    xml_path: Path, config_path: Path, session: Session | None = None, job_id: str = ""
+) -> int:
+    """
+    Ingest a single MT5 XML result file and commit all runs to the database.
+
+    - If no session is passed, creates one automatically.
+    - Calculates derived metrics: expected_payoff, recovery_factor, custom_score
+    """
+    owns_session = session is None
+    engine = get_engine() if owns_session else None
+    session = session or get_session(engine).__enter__()
+
+    try:
+        job_meta = extract_job_metadata(config_path)
+        symbol, start_date, end_date, run_month = extract_symbol_and_dates_from_xml(
+            xml_path
         )
+        raw_runs = extract_runs_from_xml(xml_path)
+
+        total = 0
+        for record in raw_runs:
+            inputs = {k: v for k, v in record.items() if k.startswith("input_")}
+            trades = int(record.get("Trades", 0))
+            profit = float(record.get("Profit", 0))
+            drawdown = float(record.get("Drawdown", 0))
+            sharpe_ratio = float(record.get("Sharpe Ratio", 0))
+
+            # Derived metrics
+            expected_payoff = profit / trades if trades else 0.0
+            recovery_factor = profit / drawdown if drawdown else 0.0
+            custom_score = profit - (drawdown * 2)
+
+            run = Run(
+                job_id=job_id,
+                symbol=symbol,
+                start_date=start_date,
+                end_date=end_date,
+                run_month=run_month,
+                is_full_month=is_discrete_month(start_date, end_date),
+                pass_number=int(record["pass_number"]),
+                profit=profit,
+                drawdown=drawdown,
+                sharpe_ratio=sharpe_ratio,
+                trades=trades,
+                expected_payoff=expected_payoff,
+                recovery_factor=recovery_factor,
+                profit_factor=None,
+                custom_score=custom_score,
+                params_json=inputs,
+                result_hash=generate_result_hash(
+                    symbol,
+                    job_meta["modeling_mode"],
+                    start_date,
+                    end_date,
+                    inputs,
+                    {"profit": profit, "drawdown": drawdown, "trades": trades},
+                ),
+                created_at=datetime.utcnow(),
+            )
+            session.add(run)
+            total += 1
+
+        if owns_session:
+            session.commit()
+            logger.info(f"💾 Committed {total} runs from {xml_path.name}")
+    finally:
+        if owns_session:
+            session.close()
+
+    return total

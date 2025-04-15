@@ -178,6 +178,10 @@ def on_load_ini() -> None:
 
 def on_run_optimizations() -> None:
     try:
+        # ✅ Persist current live UI state
+        on_save_inputs()
+
+        # ✅ Now run from the saved config
         run_optimizations(Path(".cache/current_config.json"))
     except Exception as e:
         print(f"Run failed: {e}")

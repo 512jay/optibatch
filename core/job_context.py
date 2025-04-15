@@ -23,6 +23,10 @@ class JobContext:
     def report_exists(self) -> bool:
         return self.final_xml_path.exists() and self.final_xml_path.stat().st_size > 0
 
+    @property
+    def job_id(self) -> str:
+        return self.run_folder.name
+
 
 def build_job_context(
     ini_file: Path,

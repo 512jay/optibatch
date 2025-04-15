@@ -43,18 +43,18 @@ def write_ini_for_run(run_id: int, output_dir: Path) -> Path:
         header_values = {
             "Expert": job.expert_path,
             "Symbol": run.symbol,
-            "Period": run.timeframe,
-            "Optimization": "1",
-            "Model": job.modeling_mode,
+            "Period": job.period,
+            "Optimization": "1",  # export is optimization-style
+            "Model": job.model,   # ✅ use only the new field
             "FromDate": run.start_date.strftime("%Y.%m.%d"),
             "ToDate": run.end_date.strftime("%Y.%m.%d"),
             "ForwardMode": "0",
-            "Deposit": str(int(job.deposit)),
+            "Deposit": str(job.deposit),
             "Currency": job.currency,
             "ProfitInPips": "0",
             "Leverage": job.leverage,
             "ExecutionMode": "0",
-            "OptimizationCriterion": "0",
+            "OptimizationCriterion": str(job.optimization_criterion or 0),
         }
         for key in INI_HEADER_ORDER:
             ini_lines.append(f"{key}={header_values[key]}")
@@ -71,10 +71,8 @@ def write_ini_for_run(run_id: int, output_dir: Path) -> Path:
 
             ini_lines.append(f"{param_name}={full_line}")
 
-
-
         # Write to file (UTF-16 LE)
-        filename = f"{job.expert_name}.{run.symbol}.{run.timeframe}.{run.start_date.strftime('%Y%m%d')}_{run.end_date.strftime('%Y%m%d')}.{run.pass_number:03}.ini"
+        filename = f"{job.expert_name}.{run.symbol}.{job.period}.{run.start_date.strftime('%Y%m%d')}_{run.end_date.strftime('%Y%m%d')}.{run.pass_number:03}.ini"
         output_path = output_dir / filename
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with output_path.open("w", encoding="utf-16") as f:

@@ -6,6 +6,7 @@ JedgeBot/
 │   │   ├── app_state.json
 │   │   ├── current_config.ini
 │   │   ├── current_config.json
+│   ├── .optibatch
 │   ├── Makefile
 │   ├── README.md
 │   ├── README.txt
@@ -121,6 +122,202 @@ JedgeBot/
 │   │   │   │   ├── EURUSD.20230401_20230430.xml
 │   │   │   ├── current_config.ini
 │   │   │   ├── job_config.json
+│   │   ├── 20250414_111547_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_112527_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_112623_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_112847_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_112941_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_115011_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_115242_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_120858_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_121200_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_122721_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_122903_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_123225_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_123509_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.xml
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_124620_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.xml
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_124811_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.xml
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_132929_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_133239_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_134707_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_135156_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.xml
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_135932_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.xml
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_141107_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.xml
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_141929_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.xml
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_143542_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.xml
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_143925_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.xml
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_144523_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.xml
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_145501_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.xml
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_145604_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.xml
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
+│   │   ├── 20250414_145715_IndyTSL
+│   │   │   ├── EURUSD
+│   │   │   │   ├── EURUSD.20230301_20230331.ini
+│   │   │   │   ├── EURUSD.20230301_20230331.xml
+│   │   │   │   ├── EURUSD.20230401_20230430.ini
+│   │   │   │   ├── EURUSD.20230401_20230430.xml
+│   │   │   ├── current_config.ini
+│   │   │   ├── job_config.json
 │   ├── helpers
 │   │   ├── __init__.py
 │   │   ├── enums.py
@@ -157,6 +354,7 @@ JedgeBot/
 │   ├── requirements.txt
 │   ├── robot.ico
 │   ├── robot.png
+│   ├── settings.py
 │   ├── steam_lit.py
 │   ├── tests
 │   │   ├── __init__.py
@@ -171,7 +369,6 @@ JedgeBot/
 │   │   ├── ui
 │   │   │   ├── __init__.py
 │   │   │   ├── test_updaters.py
-│   ├── titles.py
 │   ├── trash
 │   │   ├── actions
 │   │   │   ├── ini_buttons.py
@@ -183,6 +380,7 @@ JedgeBot/
 │   ├── ui
 │   │   ├── __init__.py
 │   │   ├── config_loader.py
+│   │   ├── database_menu.py
 │   │   ├── edit_inputs_popup.py
 │   │   ├── ini_loader.py
 │   │   ├── input_editor.py
