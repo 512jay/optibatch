@@ -2,7 +2,7 @@
   "path": ".cache\\current_config.ini",
   "tester": {
     "Expert": "Shared Projects\\IndyTSL\\IndyTSL.ex5",
-    "Symbol": "EURUSD,GBPUSD,NZDUSD,USDCAD,USDCHF",
+    "Symbol": "CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,EURCHF,EURGBP",
     "Period": "H1",
     "Optimization": 1,
     "Model": "1",

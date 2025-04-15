@@ -18,7 +18,7 @@ class Job(Base):
     expert_path: Mapped[str]
     strategy_version: Mapped[Optional[str]]
 
-    modeling_mode: Mapped[Optional[str]]  # from [Tester]
+    model: Mapped[Optional[str]] = mapped_column(nullable=True)
     optimization_mode: Mapped[Optional[str]] = mapped_column(nullable=True)
     optimization_criterion: Mapped[Optional[str]] = mapped_column(nullable=True)
     period: Mapped[str]  # previously timeframe, now matches INI "Period"

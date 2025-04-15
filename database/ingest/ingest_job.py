@@ -222,7 +222,7 @@ def ingest_single_xml(
                 params_json=inputs,
                 result_hash=generate_result_hash(
                     symbol,
-                    job_meta["modeling_mode"],
+                    job_meta["model"],
                     start_date,
                     end_date,
                     inputs,
