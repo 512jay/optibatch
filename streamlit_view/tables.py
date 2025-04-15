@@ -49,4 +49,4 @@ def show_run_table(df: pd.DataFrame) -> None:
 
     with st.expander("🔍 Table selection debug:"):
         st.write(selected_df)
-        st.code(f"DEBUG: run_id = {run_id}")
+        #  st.code(f"DEBUG: run_id = {run_id}")

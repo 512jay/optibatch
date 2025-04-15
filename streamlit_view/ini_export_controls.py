@@ -7,7 +7,7 @@ from database.export.ini_writer import write_ini_for_run
 
 def show_ini_export_controls() -> None:
     st.sidebar.header("📤 INI Export")
-    st.sidebar.code(f"DEBUG: run_id = {st.session_state.get('selected_run_id')}")
+    # st.sidebar.code(f"DEBUG: run_id = {st.session_state.get('selected_run_id')}")
 
     run_id = st.session_state.get("selected_run_id")
 
