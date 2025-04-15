@@ -10,6 +10,7 @@ from streamlit_view.ini_export_controls import show_ini_export_controls
 
 def main() -> None:
     configure_page()
+
     st.title("📊 OptiBatch Dashboard")
 
     df = load_and_prepare_dataframe()
@@ -18,6 +19,7 @@ def main() -> None:
         return
 
     st.success(f"✅ Loaded {len(df)} runs.")
+
     show_combined_symbol_chart(df)
     show_run_table(df)
     show_ini_export_controls()

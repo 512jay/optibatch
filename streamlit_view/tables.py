@@ -47,6 +47,6 @@ def show_run_table(df: pd.DataFrame) -> None:
     run_id = extract_run_id(selected_df)
     st.session_state[_selected_run_id_key] = run_id
 
-    with st.expander("🔍 Table selection debug:"):
-        st.write(selected_df)
-        #  st.code(f"DEBUG: run_id = {run_id}")
+    # with st.expander("🔍 Table selection debug:"):
+    #     st.write(selected_df)
+    #     st.code(f"DEBUG: run_id = {run_id}")
