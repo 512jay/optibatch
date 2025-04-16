@@ -1,52 +1,55 @@
-# /backend/runs_db_connected.py
-
-from fastapi import APIRouter, Query, HTTPException
-from typing import Optional
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
+from typing import Optional, List
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from backend.db import get_session
 from database.models import Run, Job
+from datetime import date, datetime
+
 
 router = APIRouter()
 
 
 class RunModel(BaseModel):
-    run_id: int
-    job_id: int
+    run_id: int = Field(alias="id")  # ✅ Alias from SQLAlchemy 'id' field
+    job_id: str
     symbol: str
-    profit: float
-    run_month: str
-    custom_score: Optional[float]
-    trades: Optional[int]
+    profit: Optional[float]
     drawdown: Optional[float]
+    custom_score: Optional[float]
+    sharpe_ratio: Optional[float]
+    trades: Optional[int]
+    expected_payoff: Optional[float]
+    recovery_factor: Optional[float]
+    profit_factor: Optional[float]
+    run_month: str
+    start_date: date
+    end_date: date
+    pass_number: int
+    result: Optional[float]
+    is_full_month: bool
+    params_json: Optional[dict]
+    result_hash: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+    tags: List[str]
+    notes: Optional[str]
+    run_label: Optional[str]
+    status: str
+    is_archived: bool
 
-    model_config = {"from_attributes": True}
+    model_config = {
+        "from_attributes": True,
+        "populate_by_name": True,  # ✅ Enables alias resolution
+    }
 
 
 @router.get("/", response_model=list[RunModel])
-def list_runs(symbol: Optional[str] = None, min_profit: Optional[float] = None) -> list[RunModel]:
+def list_runs() -> list[RunModel]:
     with get_session() as session:
         stmt = select(Run).join(Job)
-
-        if symbol:
-            stmt = stmt.where(Run.symbol == symbol)
-        if min_profit is not None:
-            stmt = stmt.where(Run.profit >= min_profit)
-
         runs = session.scalars(stmt).all()
-        return [
-            RunModel(
-                run_id=run.id,
-                job_id=run.job_id,
-                symbol=run.symbol,
-                profit=run.profit,
-                run_month=run.run_month,
-                custom_score=run.custom_score,
-                trades=run.trades,
-                drawdown=run.drawdown,
-            )
-            for run in runs
-        ]
+        return [RunModel.model_validate(run) for run in runs]
 
 
 @router.get("/{run_id}", response_model=RunModel)
@@ -55,13 +58,4 @@ def get_run(run_id: int) -> RunModel:
         run = session.get(Run, run_id)
         if not run:
             raise HTTPException(status_code=404, detail="Run not found")
-        return RunModel(
-            run_id=run.id,
-            job_id=run.job_id,
-            symbol=run.symbol,
-            profit=run.profit,
-            run_month=run.run_month,
-            custom_score=run.custom_score,
-            trades=run.trades,
-            drawdown=run.drawdown,
-        )
+        return RunModel.model_validate(run)

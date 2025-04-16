@@ -34,6 +34,7 @@ root.title("Optibatch")
 toast_label = None
 
 
+
 def show_toast(message: str, duration: int = 2000) -> None:
     global toast_label
     if toast_label:
@@ -171,17 +172,6 @@ def on_first_load_and_resize() -> None:
     update_optimized_inputs_preview()
     optimized_preview.tree.after(0, lambda: autosize_columns(optimized_preview.tree))
 
-import subprocess
-
-
-def launch_streamlit_dashboard() -> None:
-    """Launches the Streamlit dashboard in a separate process."""
-    try:
-        subprocess.Popen(["streamlit", "run", "run_dashboard.py"])
-    except FileNotFoundError:
-        messagebox.showerror(
-            "Streamlit Not Found", "Make sure Streamlit is installed and in your PATH."
-        )
 
 
 update_window_title(root)
@@ -200,12 +190,6 @@ actions_menu.add_command(label="⏭️ Continue Previous", command=on_continue_p
 actions_menu.add_command(label="🚀 Run Optimizations", command=on_run_optimizations)
 menubar.add_cascade(label="Actions", menu=actions_menu)
 
-# Dashboard Menu
-dashboard_menu = tk.Menu(menubar, tearoff=0)
-dashboard_menu.add_command(
-    label="Open Streamlit Dashboard", command=launch_streamlit_dashboard
-)
-menubar.add_cascade(label="Dashboard", menu=dashboard_menu)
 
 # MT5
 build_mt5_menu(menubar, root)
