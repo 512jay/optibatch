@@ -5,12 +5,28 @@ from tkinter import ttk
 from core.input_parser import InputParam
 from typing import NamedTuple, Optional, Callable
 from math import ceil
-
+import tkinter.font as tkFont
 
 class OptimizedPreview(NamedTuple):
     frame: tk.Frame
     tree: ttk.Treeview
     save_button: ttk.Button
+
+
+def autosize_columns(tree: ttk.Treeview) -> None:
+    """
+    Auto-resizes Treeview columns based on max content width.
+    """
+    style = ttk.Style()
+    font_name = style.lookup("Treeview", "font")
+    font = tkFont.nametofont("TkDefaultFont")
+
+    for col in tree["columns"]:
+        max_width = font.measure(col.capitalize()) + 20  # Start with heading
+        for iid in tree.get_children():
+            val = tree.set(iid, col)
+            max_width = max(max_width, font.measure(val) + 20)
+        tree.column(col, width=max_width)
 
 
 def create_optimized_preview_widget(
@@ -23,7 +39,7 @@ def create_optimized_preview_widget(
 
     # Treeview styling
     style = ttk.Style()
-    style.configure("Treeview", rowheight=28, font=("Segoe UI", 10))
+    style.configure("Treeview", rowheight=36, font=("Segoe UI", 10))
     style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"))
 
     columns = ("default", "start", "step", "stop")
@@ -81,7 +97,7 @@ def update_optimized_preview(
     tree.delete(*tree.get_children())
 
     variant_count = count_variants(inputs)
-    tree.heading("#0", text=f"Inputs to Optimize ({variant_count} variations)")
+    tree.heading("#0", text=f"   ({variant_count} variations)")
 
     for param in inputs:
         if param.optimize:
@@ -91,6 +107,8 @@ def update_optimized_preview(
                 text=param.name,
                 values=(param.default, param.start, param.step, param.end),
             )
+
+    autosize_columns(tree)
 
 
 def edit_cell(tree: ttk.Treeview, event: tk.Event) -> None:

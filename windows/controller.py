@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Optional, Tuple
 from loguru import logger
 from core.state import registry
-from typing import Optional
 import win32api  # type: ignore
 
 SAFE_XML_VIEWERS = {
@@ -59,6 +58,9 @@ def close_mt5_report_window() -> None:
             logger.info(f"🔐 Closed {exe_name} report window: {title}")
         except Exception as e:
             logger.warning(f"⚠️ Failed to close {exe_name} window: {e}")
+
+    # 🔥 Close hidden XML Edge tabs as a fallback
+    kill_hidden_edge_xml_tabs()
 
 
 def load_window_geometry() -> Optional[Tuple[int, int, int, int]]:
@@ -175,3 +177,19 @@ def ensure_mt5_ready_for_automation() -> None:
         focus_window(hwnd)
         time.sleep(1.0)
 
+
+def kill_hidden_edge_xml_tabs():
+    """
+    Kills background or hidden Edge processes that opened .xml files but are not visible.
+    """
+    for proc in psutil.process_iter(["pid", "name", "cmdline"]):
+        try:
+            if proc.info["name"] and "msedge" in proc.info["name"].lower():
+                cmdline = " ".join(proc.info["cmdline"]).lower()
+                if ".xml" in cmdline:
+                    logger.warning(
+                        f"💀 Force-killing hidden Edge XML tab (PID {proc.pid})"
+                    )
+                    proc.kill()
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue

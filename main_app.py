@@ -21,6 +21,7 @@ from ui.widgets.header_fields import build_header_fields
 from ui.widgets.optimized_preview import (
     create_optimized_preview_widget,
     update_optimized_preview,
+    autosize_columns,
 )
 from ui.widgets.strategy_config import build_strategy_config
 from ui.widgets.options_menu import build_options_menu
@@ -140,6 +141,7 @@ def on_save_inputs() -> None:
 
 def update_optimized_inputs_preview() -> None:
     update_optimized_preview(optimized_preview, parsed_strategy_inputs)
+    optimized_preview.tree.after(0, lambda: autosize_columns(optimized_preview.tree))
 
 
 def on_edit_inputs() -> None:
@@ -192,6 +194,11 @@ def on_run_optimizations() -> None:
 
 def update_symbol_field(new_symbol: str) -> None:
     symbol_var.set(new_symbol)
+
+
+def on_first_load_and_resize() -> None:
+    update_optimized_inputs_preview()
+    optimized_preview.tree.after(0, lambda: autosize_columns(optimized_preview.tree))
 
 
 # Widget Construction (after callbacks defined)
