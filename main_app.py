@@ -54,47 +54,18 @@ def show_toast(message: str, duration: int = 2000) -> None:
     root.after(duration, lambda: frame.destroy())
 
 
-update_window_title(root)
-menubar = tk.Menu(root)
-
-# Options
-options_menu, use_discrete_months_var = build_options_menu(menubar)
-menubar.add_cascade(label="Options", menu=options_menu)
-
-# Database
-database_menu = build_database_menu(root)
-menubar.add_cascade(label="Database", menu=database_menu)
-
-# MT5
-build_mt5_menu(menubar, root)
-
-root.config(menu=menubar)
-
-
-# Build UI sections
-header_frame = ttk.LabelFrame(root, text="Header")
-strategy_frame = ttk.LabelFrame(root, text="Strategy")
-date_frame = ttk.LabelFrame(root, text="Date Range")
-inputs_frame = ttk.LabelFrame(root, text="Inputs to Optimize")
-for frame in [header_frame, strategy_frame, date_frame, inputs_frame]:
-    frame.pack(fill="x", padx=10, pady=5)
-
-parsed_strategy_inputs: list[InputParam] = []
-header_vars = build_header_fields(header_frame)
-strategy_vars = build_strategy_config(strategy_frame)
-fromdate_var = build_date_fields(date_frame, 0, "From Date")
-todate_var = build_date_fields(date_frame, 1, "To Date")
-
-expert_path_var = header_vars["expert_var"]
-symbol_var = header_vars["symbol_var"]
-deposit_var = header_vars["deposit_var"]
-currency_var = header_vars["currency_var"]
-leverage_var = header_vars["leverage_var"]
-timeframe_var = strategy_vars["timeframe_var"]
-strategy_model_var = strategy_vars["strategy_model_var"]
-optimization_mode_var = strategy_vars["optimization_mode_var"]
-result_priority_var = strategy_vars["result_priority_var"]
-forward_mode_var = strategy_vars["forward_mode_var"]
+def on_continue_previous() -> None:
+    job_path = filedialog.askdirectory(
+        title="Select Previous Job Folder", initialdir="generated"
+    )
+    if job_path:
+        config_path = Path(job_path) / "job_config.json"
+        if config_path.exists():
+            run_optimizations(config_path, run_folder=Path(job_path))
+        else:
+            messagebox.showerror(
+                "Missing File", f"No job_config.json found in {job_path}"
+            )
 
 
 # Logic Functions
@@ -199,6 +170,73 @@ def update_symbol_field(new_symbol: str) -> None:
 def on_first_load_and_resize() -> None:
     update_optimized_inputs_preview()
     optimized_preview.tree.after(0, lambda: autosize_columns(optimized_preview.tree))
+
+import subprocess
+
+
+def launch_streamlit_dashboard() -> None:
+    """Launches the Streamlit dashboard in a separate process."""
+    try:
+        subprocess.Popen(["streamlit", "run", "run_dashboard.py"])
+    except FileNotFoundError:
+        messagebox.showerror(
+            "Streamlit Not Found", "Make sure Streamlit is installed and in your PATH."
+        )
+
+
+update_window_title(root)
+menubar = tk.Menu(root)
+
+# Options
+options_menu, use_discrete_months_var = build_options_menu(menubar)
+menubar.add_cascade(label="Options", menu=options_menu)
+
+
+# Actions Menu (matches button_row functionality)
+actions_menu = tk.Menu(menubar, tearoff=0)
+actions_menu.add_command(label="📂 Load INI", command=on_load_ini)
+actions_menu.add_command(label="✏️ Edit Inputs", command=on_edit_inputs)
+actions_menu.add_command(label="⏭️ Continue Previous", command=on_continue_previous)
+actions_menu.add_command(label="🚀 Run Optimizations", command=on_run_optimizations)
+menubar.add_cascade(label="Actions", menu=actions_menu)
+
+# Dashboard Menu
+dashboard_menu = tk.Menu(menubar, tearoff=0)
+dashboard_menu.add_command(
+    label="Open Streamlit Dashboard", command=launch_streamlit_dashboard
+)
+menubar.add_cascade(label="Dashboard", menu=dashboard_menu)
+
+# MT5
+build_mt5_menu(menubar, root)
+
+root.config(menu=menubar)
+
+
+# Build UI sections
+header_frame = ttk.LabelFrame(root, text="Header")
+strategy_frame = ttk.LabelFrame(root, text="Strategy")
+date_frame = ttk.LabelFrame(root, text="Date Range")
+inputs_frame = ttk.LabelFrame(root, text="Inputs to Optimize")
+for frame in [header_frame, strategy_frame, date_frame, inputs_frame]:
+    frame.pack(fill="x", padx=10, pady=5)
+
+parsed_strategy_inputs: list[InputParam] = []
+header_vars = build_header_fields(header_frame)
+strategy_vars = build_strategy_config(strategy_frame)
+fromdate_var = build_date_fields(date_frame, 0, "From Date")
+todate_var = build_date_fields(date_frame, 1, "To Date")
+
+expert_path_var = header_vars["expert_var"]
+symbol_var = header_vars["symbol_var"]
+deposit_var = header_vars["deposit_var"]
+currency_var = header_vars["currency_var"]
+leverage_var = header_vars["leverage_var"]
+timeframe_var = strategy_vars["timeframe_var"]
+strategy_model_var = strategy_vars["strategy_model_var"]
+optimization_mode_var = strategy_vars["optimization_mode_var"]
+result_priority_var = strategy_vars["result_priority_var"]
+forward_mode_var = strategy_vars["forward_mode_var"]
 
 
 # Widget Construction (after callbacks defined)
