@@ -14,9 +14,73 @@ from sqlalchemy.orm import Session
 from database.models import Job, Run
 from database.session import get_engine, get_session
 from loguru import logger
-
-
 import re
+from datetime import datetime
+from typing import Any
+
+def coerce_tester_value(key: str, val: str) -> Any:
+    val = val.strip()
+
+    int_keys = {
+        "deposit",
+        "leverage",
+        "model",
+        "profitinpips",
+        "optimization",
+        "optimizationcriterion",
+        "executionmode",
+        "forwardmode",
+    }
+
+    date_keys = {"fromdate", "todate"}
+
+    try:
+        if key.lower() in int_keys:
+            return int(val)
+        if key.lower() in date_keys:
+            return datetime.strptime(val, "%Y.%m.%d").date()
+    except Exception:
+        pass
+
+    return val  # fallback to string
+
+
+def parse_input_types_from_ini(ini_path: Path) -> dict[str, type]:
+    """
+    Returns a dict mapping each input name to its best-guessed type based on the ini values.
+    """
+    from configparser import ConfigParser
+
+    config = ConfigParser(strict=False, delimiters=("=",))
+    config.optionxform = str  # preserve case
+    config.read(ini_path, encoding="utf-8")
+
+    input_types: dict[str, type] = {}
+
+    if "TesterInputs" not in config:
+        return input_types
+
+    for key, val in config["TesterInputs"].items():
+        if key.startswith(";"):
+            continue  # skip headers or comments
+
+        try:
+            first_val = val.split("||")[0].strip().lower()
+
+            if first_val in {"true", "false"}:
+                input_types[key] = bool
+            elif first_val == "":
+                input_types[key] = str
+            elif "." in first_val:
+                float(first_val)  # validate
+                input_types[key] = float
+            else:
+                int(first_val)  # validate
+                input_types[key] = int
+        except Exception:
+            input_types[key] = str  # fallback
+
+    return input_types
 
 
 def extract_strategy_version(expert_path: str) -> str | None:
@@ -92,7 +156,7 @@ def extract_job_metadata(config_path: Path) -> dict:
         "optimization_criterion": str(tester.get("OptimizationCriterion", "")),
         "deposit": float(tester["Deposit"]),
         "currency": tester["Currency"],
-        "leverage": tester["Leverage"],
+        "leverage": int(tester["Leverage"]),
         "tester_inputs": full_inputs,
     }
 
@@ -227,7 +291,25 @@ def ingest_single_xml(
                 skipped_zero_trades += 1
                 continue
 
-            inputs = {k: v for k, v in record.items() if k.startswith("input_")}
+            input_type_map = parse_input_types_from_ini(config_path)
+            inputs = {}
+            for k, v in record.items():
+                if not k.startswith("input_"):
+                    continue
+                val = v.strip()
+                expected_type = input_type_map.get(k, str)
+                try:
+                    if expected_type == bool:
+                        inputs[k] = val.lower() == "true"
+                    elif expected_type == float:
+                        inputs[k] = float(val)
+                    elif expected_type == int:
+                        inputs[k] = int(float(val))  # allow "2.0" style ints
+                    else:
+                        inputs[k] = val
+                except Exception:
+                    inputs[k] = val
+
             profit = float(record.get("Profit", 0))
             drawdown_str = record.get("Equity DD %", "0").replace("%", "").strip()
             drawdown = float(drawdown_str) if drawdown_str else 0.0

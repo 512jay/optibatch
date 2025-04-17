@@ -7,6 +7,10 @@ from datetime import date
 from sqlalchemy.orm import Session
 from database.models import Run, Job
 from database.session import get_engine, get_session
+from typing import Union
+
+def format_ini_date(val: Union[str, date]) -> str:
+    return val.strftime("%Y.%m.%d") if isinstance(val, date) else str(val)
 
 
 INI_HEADER_ORDER = [
@@ -45,9 +49,9 @@ def write_ini_for_run(run_id: int, output_dir: Path) -> Path:
             "Symbol": run.symbol,
             "Period": job.period,
             "Optimization": "1",  # export is optimization-style
-            "Model": job.model,   # ✅ use only the new field
-            "FromDate": run.start_date.strftime("%Y.%m.%d"),
-            "ToDate": run.end_date.strftime("%Y.%m.%d"),
+            "Model": job.model,  # ✅ use only the new field
+            "FromDate": format_ini_date(run.start_date.strftime("%Y.%m.%d")),
+            "ToDate": format_ini_date(run.end_date.strftime("%Y.%m.%d")),
             "ForwardMode": "0",
             "Deposit": str(job.deposit),
             "Currency": job.currency,
@@ -66,7 +70,12 @@ def write_ini_for_run(run_id: int, output_dir: Path) -> Path:
 
             if override is not None and str(override).lower() != "none":
                 parts = full_line.split("||")
-                parts[0] = str(override)
+                if isinstance(override, bool):
+                    parts[0] = "true" if override else "false"
+                elif isinstance(override, float) and override.is_integer():
+                    parts[0] = str(int(override))  # Avoid unnecessary .0
+                else:
+                    parts[0] = str(override)
                 full_line = "||".join(parts)
 
             ini_lines.append(f"{param_name}={full_line}")

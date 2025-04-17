@@ -1,0 +1,56 @@
+{
+  "20250415_115419_IndyTSL_v2": {
+    "tester_inputs": {
+      "Expert": "Shared Projects\\IndyTSL\\IndyTSL_v2.ex5",
+      "Symbol": "EURUSD,GBPUSD",
+      "Period": "H1",
+      "Optimization": 1,
+      "Model": 1,
+      "FromDate": "2020.04.01",
+      "ToDate": "2025.04.01",
+      "ForwardMode": 0,
+      "Deposit": 1000,
+      "Currency": "USD",
+      "ProfitInPips": 0,
+      "Leverage": 100,
+      "ExecutionMode": 0,
+      "OptimizationCriterion": 0
+    },
+    "params_json": {
+      "input_initialOrderType": 0,
+      "input_LongStopLossPercent": 0.2,
+      "input_ShortStopLossPercent": 0.2,
+      "input_LongTakeProfitPercent": 0.0,
+      "input_ShortTakeProfitPercent": 0.0,
+      "input_lotSize": 0.1,
+      "input_magicNumber": 123456
+    }
+  },
+  "20250415_175518_IndyTSL_v2": {
+    "tester_inputs": {
+      "Expert": "Shared Projects\\IndyTSL\\IndyTSL_v2.ex5",
+      "Symbol": "EURUSD,GBPUSD",
+      "Period": "H1",
+      "Optimization": 1,
+      "Model": 1,
+      "FromDate": "2020.04.01",
+      "ToDate": "2025.04.01",
+      "ForwardMode": 0,
+      "Deposit": 1000,
+      "Currency": "USD",
+      "ProfitInPips": 0,
+      "Leverage": 100,
+      "ExecutionMode": 0,
+      "OptimizationCriterion": 0
+    },
+    "params_json": {
+      "input_initialOrderType": 0,
+      "input_LongStopLossPercent": 0.2,
+      "input_ShortStopLossPercent": 0.2,
+      "input_LongTakeProfitPercent": 0.0,
+      "input_ShortTakeProfitPercent": 0.0,
+      "input_lotSize": 0.1,
+      "input_magicNumber": 123456
+    }
+  }
+}

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Union
 
 import enum
 from sqlalchemy import (
@@ -20,6 +20,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 
+TypedValue = Union[str, int, float, bool]
 
 # Base class for all models
 class Base(DeclarativeBase):
@@ -80,7 +81,7 @@ class Job(Base):
     deposit: Mapped[float]
     currency: Mapped[str]
     leverage: Mapped[str]
-    tester_inputs: Mapped[Dict[str, str]] = mapped_column(JSON)
+    tester_inputs: Mapped[Dict[str, TypedValue]] = mapped_column(JSON)
 
     # Audit
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
