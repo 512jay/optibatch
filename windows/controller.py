@@ -29,10 +29,11 @@ MAX_RETRIES = 5
 RETRY_DELAY_SECONDS = 2
 
 
-def close_mt5_report_window() -> None:
+def close_mt5_report_window(xml_path: Optional[Path] = None) -> None:
     """
     Attempts to close XML report viewer windows opened by known external programs.
     Only affects windows with .xml in the title and process in a safe list.
+    Optionally waits for the file to be fully released.
     """
 
     def enum_handler(hwnd: int, windows_to_close: list[tuple[int, str]]) -> None:
@@ -61,6 +62,12 @@ def close_mt5_report_window() -> None:
 
     # 🔥 Close hidden XML Edge tabs as a fallback
     kill_hidden_edge_xml_tabs()
+
+    # 🕒 Wait for file release if provided
+    if xml_path:
+        logger.debug(f"⏳ Waiting for XML file release: {xml_path}")
+        wait_for_file_release(xml_path)
+        logger.debug(f"✅ File released: {xml_path}")
 
 
 def load_window_geometry() -> Optional[Tuple[int, int, int, int]]:
@@ -193,3 +200,23 @@ def kill_hidden_edge_xml_tabs():
                     proc.kill()
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
+
+
+def wait_for_file_release(path: Path, max_wait: float = 10.0) -> None:
+    """
+    Waits until a file is no longer locked and can be opened for reading/writing.
+    Raises TimeoutError if not released within `max_wait` seconds.
+    """
+    import time
+
+    start_time = time.time()
+    delay = 0.5
+
+    while time.time() - start_time < max_wait:
+        try:
+            with open(path, "rb+"):
+                return  # File is accessible
+        except (PermissionError, OSError):
+            time.sleep(delay)
+            delay = min(delay * 1.5, 2.0)
+    raise TimeoutError(f"File still locked after {max_wait}s: {path}")

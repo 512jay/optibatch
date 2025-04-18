@@ -26,7 +26,8 @@ def move_xml_to_job_folder(context: JobContext) -> Path:
     dst.parent.mkdir(parents=True, exist_ok=True)
 
     if src.exists():
-        shutil.move(src, dst)
+        safe_move_with_wait(src, dst)
+
         logger.success(f"📂 Moved report: {src.name} → {dst}")
     else:
         logger.warning(f"⚠️ Expected XML not found in {REPORTS_DIR}: {src.name}")
@@ -133,9 +134,35 @@ def export_and_confirm_xml(context: JobContext) -> bool:
     handle_save_dialog(context)
 
     if confirm_export_success(context):
-        move_xml_to_job_folder(context)
+        final_path = move_xml_to_job_folder(context)
         time.sleep(1.5)  # ⏱ give the viewer time to open
-        close_mt5_report_window()
+        close_mt5_report_window(xml_path=final_path)
         return True
 
     return False
+
+
+def safe_move_with_wait(src: Path, dst: Path, max_wait: float = 10.0) -> None:
+    """
+    Attempts to move a file, retrying if it's temporarily locked (WinError 32).
+    Retries for up to `max_wait` seconds before raising.
+    """
+    import shutil
+    import time
+
+    start_time = time.time()
+    delay = 0.5
+
+    while time.time() - start_time < max_wait:
+        try:
+            shutil.move(src, dst)
+            return
+        except PermissionError as e:
+            if "WinError 32" in str(e):
+                time.sleep(delay)
+                delay = min(delay * 1.5, 2.0)  # back off slightly
+            else:
+                raise
+    raise TimeoutError(
+        f"❌ Could not move {src} → {dst} within {max_wait}s due to file lock."
+    )
