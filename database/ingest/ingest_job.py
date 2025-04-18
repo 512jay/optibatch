@@ -45,6 +45,13 @@ def coerce_tester_value(key: str, val: str) -> Any:
     return val  # fallback to string
 
 
+def parse_input_types_from_json(path: Path) -> dict[str, Any]:
+    with open(path, encoding="utf-8-sig") as f:
+        config = json.load(f)
+    inputs = config.get("inputs", {})
+    return {k: v.get("default", "") for k, v in inputs.items()}
+
+
 def parse_input_types_from_ini(ini_path: Path) -> dict[str, type]:
     """
     Returns a dict mapping each input name to its best-guessed type based on the ini values.
@@ -224,14 +231,14 @@ def extract_runs_from_xml(xml_path: Path) -> list[dict]:
     return results
 
 
-def ingest_job_folder(folder: Path) -> int:
+def ingest_job_folder(folder: Path, config_path: Path | None = None) -> int:
     """
     Ingest all XML result files in a job folder (generated/YYYYMMDD_HHMMSS_NAME).
 
     Automatically creates the Job record and commits all runs.
     """
     engine = get_engine()
-    config_path = folder / "job_config.json"
+    config_path = config_path or (folder / "job_config.json")
     job_id = folder.name
     total_runs = 0
 
@@ -239,22 +246,35 @@ def ingest_job_folder(folder: Path) -> int:
         # Create Job record if missing
         from database.models import Job
 
-        if not session.get(Job, job_id):
-            job_meta = extract_job_metadata(config_path)
-            job = Job(
-                id=job_id, job_name=job_id, created_at=datetime.utcnow(), **job_meta
-            )
+        job_meta = extract_job_metadata(config_path)
+        job = Job(
+            id=job_id, job_name=job_id, created_at=datetime.utcnow(), **job_meta
+        )
 
-            session.add(job)
-            logger.info(f"📋 Created job record for {job_id}")
+        runs_to_add: list[Run] = []
 
-        # Loop over XMLs and ingest
         for xml_file in folder.rglob("*.xml"):
             added = ingest_single_xml(
-                xml_file, config_path, session=session, job_id=job_id
+                xml_file,
+                config_path,
+                session=session,
+                job_id=job_id,
+                preloaded_job=job,           # we'll add this param next
+                collect_only=True            # new param
             )
-            logger.info(f"📥 Ingested {added} runs from {xml_file.name}")
-            total_runs += added
+            if added:
+                runs_to_add.extend(added)
+                logger.info(f"📥 Parsed {len(added)} runs from {xml_file.name}")
+
+        if runs_to_add:
+            session.add(job)
+            for run in runs_to_add:
+                session.add(run)
+            session.commit()
+            logger.success(f"✅ Ingested {len(runs_to_add)} runs from job: {job_id}")
+        else:
+            logger.warning(f"⚠️ Skipping job '{job_id}' — all runs were duplicates or empty.")
+            return 0
 
         session.commit()
 
@@ -263,18 +283,24 @@ def ingest_job_folder(folder: Path) -> int:
 
 
 def ingest_single_xml(
-    xml_path: Path, config_path: Path, session: Session | None = None, job_id: str = ""
-) -> int:
+    xml_path: Path,
+    config_path: Path,
+    session: Session | None = None,
+    job_id: str = "",
+    preloaded_job: Job | None = None,
+    collect_only: bool = False,
+) -> list[Run] | int:
+
     """
     Ingest a single MT5 XML result file and commit all runs to the database.
 
     - If no session is passed, creates one automatically.
     - Calculates derived metrics: expected_payoff, recovery_factor, custom_score
     """
+    added_runs: list[Run] = []
     owns_session = session is None
     engine = get_engine() if owns_session else None
     session = session or get_session(engine).__enter__()
-
 
     try:
         job_meta = extract_job_metadata(config_path)
@@ -291,7 +317,13 @@ def ingest_single_xml(
                 skipped_zero_trades += 1
                 continue
 
-            input_type_map = parse_input_types_from_ini(config_path)
+
+            if config_path.name.endswith(".json"):
+                input_type_map = parse_input_types_from_json(config_path)
+            else:
+                input_type_map = parse_input_types_from_ini(config_path)
+
+
             inputs = {}
             for k, v in record.items():
                 if not k.startswith("input_"):
@@ -350,7 +382,17 @@ def ingest_single_xml(
 
                 created_at=datetime.utcnow(),
             )
-            session.add(run)
+
+            if session.query(Run).filter_by(result_hash=run.result_hash).first():
+                logger.info(f"🛑 Duplicate run skipped: {run.result_hash}")
+                continue
+
+            if collect_only:
+                run.job = preloaded_job
+                added_runs.append(run)
+            else:
+                session.add(run)
+
             total += 1
 
         if owns_session:
@@ -362,4 +404,7 @@ def ingest_single_xml(
         if owns_session:
             session.close()
 
-    return total
+    if collect_only:
+        return added_runs
+    else:
+        return total

@@ -1,5 +1,6 @@
 # main_app.py (Refactored for clarity and mypy compatibility)
 import json
+import sys
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
@@ -27,12 +28,65 @@ from ui.widgets.strategy_config import build_strategy_config
 from ui.widgets.options_menu import build_options_menu
 from ui.database_menu import build_database_menu
 from ui.updaters import populate_ui_from_ini_data
+from database.ingest.ingest_job import ingest_job_folder
 
 # UI setup
 root = tk.Tk()
 root.title("Optibatch")
 toast_label = None
 
+
+def ensure_runtime_folders() -> None:
+    """Ensure required runtime folders exist next to the .exe or script."""
+    if getattr(sys, "frozen", False):
+        # Running in a bundle (e.g., PyInstaller)
+        app_root = Path(sys.executable).parent
+    else:
+        app_root = Path(__file__).resolve().parent
+
+    required_dirs = [
+        app_root / ".optibatch",
+        app_root / "reports",
+        app_root / "logs",
+        app_root / "generated",
+    ]
+
+    for folder in required_dirs:
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+            print(f"📂 Created: {folder}")
+        except Exception as e:
+            print(f"⚠️ Could not create folder {folder}: {e}")
+
+
+ensure_runtime_folders()
+
+
+def on_ingest_job() -> None:
+    job_path = filedialog.askdirectory(
+        title="Select Job Folder to Ingest", initialdir="generated"
+    )
+    if not job_path:
+        return
+
+    job_folder = Path(job_path)
+    ini_path = job_folder / "current_config.ini"
+    json_path = job_folder / "job_config.json"
+
+    if not ini_path.exists() and not json_path.exists():
+        messagebox.showerror(
+            "Missing Config",
+            "Neither current_config.ini nor job_config.json found in the selected folder.",
+        )
+        return
+
+    try:
+        # Optional: prefer INI, fallback to JSON
+        config_path = ini_path if ini_path.exists() else json_path
+        total = ingest_job_folder(job_folder, config_path=config_path)
+        show_toast(f"📥 Ingested {total} runs!")
+    except Exception as e:
+        messagebox.showerror("Ingestion Failed", str(e))
 
 
 def show_toast(message: str, duration: int = 2000) -> None:
@@ -173,7 +227,6 @@ def on_first_load_and_resize() -> None:
     optimized_preview.tree.after(0, lambda: autosize_columns(optimized_preview.tree))
 
 
-
 update_window_title(root)
 menubar = tk.Menu(root)
 
@@ -184,6 +237,7 @@ menubar.add_cascade(label="Options", menu=options_menu)
 
 # Actions Menu (matches button_row functionality)
 actions_menu = tk.Menu(menubar, tearoff=0)
+actions_menu.add_command(label="📥 Ingest Job to DB", command=on_ingest_job)
 actions_menu.add_command(label="📂 Load INI", command=on_load_ini)
 actions_menu.add_command(label="✏️ Edit Inputs", command=on_edit_inputs)
 actions_menu.add_command(label="⏭️ Continue Previous", command=on_continue_previous)

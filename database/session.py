@@ -49,6 +49,7 @@ def _should_create_sqlite_schema() -> bool:
         return False
 
     db_path = Path(DATABASE_URL.removeprefix("sqlite:///"))
+    db_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Case 1: File doesn't exist
     if not db_path.exists():

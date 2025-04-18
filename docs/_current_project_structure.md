@@ -7,6 +7,7 @@ JedgeBot/
 │   │   ├── current_config.ini
 │   │   ├── current_config.json
 │   ├── .optibatch
+│   │   ├── optibatch.db.20250416_223323.bak
 │   ├── Makefile
 │   ├── README.md
 │   ├── README.txt
@@ -58,17 +59,6 @@ JedgeBot/
 │   │   │   ├── __init__.py
 │   │   │   ├── io.py
 │   │   ├── validation.py
-│   ├── dashboard
-│   │   ├── index.html
-│   │   ├── package-lock.json
-│   │   ├── package.json
-│   │   ├── src
-│   │   │   ├── App.tsx
-│   │   │   ├── components
-│   │   │   ├── main.tsx
-│   │   │   ├── pages
-│   │   │   │   ├── Dashboard.tsx
-│   │   ├── vite.config.ts
 │   ├── data
 │   │   ├── 1 min OHLC.ini
 │   │   ├── 1min.ini
@@ -675,6 +665,8 @@ JedgeBot/
 │   │   ├── reporter.py
 │   ├── reports
 │   ├── requirements.txt
+│   ├── retype_dryrun_20250416_223317.json
+│   ├── retype_params_json.py
 │   ├── robot.ico
 │   ├── robot.png
 │   ├── run_dashboard.py
@@ -736,4 +728,5 @@ JedgeBot/
 │   ├── windows
 │   │   ├── controller.py
 │   ├── x_generate_structure.py
+│   ├── x_generate_whole_project.py
 ```
