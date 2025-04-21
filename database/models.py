@@ -115,6 +115,7 @@ class Job(Base):
 class Run(Base):
     __tablename__ = "runs"
 
+
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     job_id: Mapped[str] = mapped_column(ForeignKey("jobs.id"))
     job: Mapped["Job"] = relationship(back_populates="runs")
@@ -139,7 +140,7 @@ class Run(Base):
     run_month: Mapped[str]
     is_full_month: Mapped[bool]
     params_json: Mapped[Optional[dict]] = mapped_column(JSON)
-    result_hash: Mapped[Optional[str]]
+    result_hash: Mapped[Optional[str]] = mapped_column(unique=True)
 
     # Audit
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

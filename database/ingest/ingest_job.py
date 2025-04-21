@@ -336,6 +336,7 @@ def ingest_single_xml(
         skipped_zero_trades = 0
         total = 0
 
+        duplicate_count = 0
         for record in raw_runs:
             trades = int(record.get("Trades", 0))
             if trades == 0:
@@ -409,7 +410,11 @@ def ingest_single_xml(
             )
 
             if session.query(Run).filter_by(result_hash=run.result_hash).first():
-                logger.info(f"🛑 Duplicate run skipped: {run.result_hash}")
+                duplicate_count += 1
+                if duplicate_count <= 5:
+                    logger.debug(f"🛑 Duplicate run skipped: {run.result_hash}")
+                elif duplicate_count == 6:
+                    logger.debug("🛑 ...more duplicates detected, suppressing further duplicate logs.")
                 continue
 
             if collect_only:
@@ -428,6 +433,9 @@ def ingest_single_xml(
     finally:
         if owns_session:
             session.close()
+
+    if duplicate_count > 0:
+        logger.info(f"🧹 Skipped {duplicate_count} duplicate runs in {xml_path.name}")
 
     if collect_only:
         return added_runs
