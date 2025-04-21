@@ -45,11 +45,36 @@ def coerce_tester_value(key: str, val: str) -> Any:
     return val  # fallback to string
 
 
-def parse_input_types_from_json(path: Path) -> dict[str, Any]:
+def parse_input_types_from_json(path: Path) -> dict[str, type]:
     with open(path, encoding="utf-8-sig") as f:
         config = json.load(f)
     inputs = config.get("inputs", {})
-    return {k: v.get("default", "") for k, v in inputs.items()}
+
+    def infer_type(val: Any) -> type:
+        try:
+            if isinstance(val, bool):
+                return bool
+            elif isinstance(val, int):
+                return int
+            elif isinstance(val, float):
+                return float
+            elif isinstance(val, str):
+                # Try to guess from string
+                if val.lower() in {"true", "false"}:
+                    return bool
+                elif "." in val:
+                    float(val)
+                    return float
+                else:
+                    int(val)
+                    return int
+        except Exception:
+            pass
+        return str
+
+    return {
+        k: infer_type(v.get("default", v.get("value", ""))) for k, v in inputs.items()
+    }
 
 
 def parse_input_types_from_ini(ini_path: Path) -> dict[str, type]:

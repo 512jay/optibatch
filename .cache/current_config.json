@@ -2,11 +2,11 @@
   "path": ".cache\\current_config.ini",
   "tester": {
     "Expert": "Shared Projects\\IndyTSL\\IndyTSL_v2.ex5",
-    "Symbol": "EURUSD,GBPUSD",
+    "Symbol": "EURUSD",
     "Period": "H1",
     "Optimization": 1,
     "Model": "1",
-    "FromDate": "2020.04.01",
+    "FromDate": "2024.04.01",
     "ToDate": "2025.04.01",
     "ForwardMode": 0,
     "Deposit": "1000",
