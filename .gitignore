@@ -31,3 +31,5 @@ jobs/
 
 generated/
 trash/
+.cache/*
+!.cache/.gitkeep
