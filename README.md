@@ -1,128 +1,149 @@
-Great — let’s modernize your `README.md` to reflect the full power of OptiBatch as it stands now.
+Absolutely — here's a clean, mypy-friendly `README.md` for OptiBatch setup that another developer could use to get started on a new machine.
 
----
-
-## ✅ Key Enhancements to Add
-
-1. **"Continue Previous Job"** logic with `job_config.json`
-2. **Job folder cleanup + XML auto-routing**
-3. **Run skipping if XML already exists**
-4. ✅ Clarify real folder names: `.cache/`, `generated/`, `reports/`
-5. ✅ Mention `job_config.json` and `current_config.json` clearly
-
----
-
-## ✍️ Updated `README.md`
+---  
 
 ```markdown
-# 🧠 Optibatch
+# 🧪 OptiBatch
 
-**Optibatch** is a Python-based GUI tool that automates MT5 strategy optimizations using `.ini` Tester configuration files. It supports batch processing, multi-symbol backtests, and job management — all from an intuitive GUI.
-
----
-
-## ✨ Features
-
-- ✅ Friendly Tkinter GUI to configure MT5 strategy optimization jobs
-- 📂 Load existing `.ini` files to auto-populate settings
-- 🧠 Resume previous jobs using `job_config.json`
-- 🗃️ Automatically skips symbols with already-exported `.xml` reports
-- 🗃️ `job_config.json` and `.ini` files saved inside each job folder
-- 🗓️ Built-in date pickers for optimization ranges
-- 📈 Supports multi-symbol jobs and discrete monthly splitting
-- 🚀 Auto-launches MT5 with proper config
-- 🧹 Automatically moves exported `.xml` to the correct job/symbol folder
-- 🛠 Supports dry-run mode and safe caching
-- 🧪 Supports `.htm`, `.csv`, and `.xml` reporting (via context menu export)
+OptiBatch is an automation tool for running, managing, and analyzing MetaTrader 5 (MT5) strategy optimizations using `.ini` configuration files. It uses Python, PyAutoGUI, and MT5 to automate backtesting and store results into a SQLite database for later analysis.
 
 ---
 
-## 🗂️ Project Structure (Simplified)
+## ⚙️ Requirements
+
+- Windows 10 or 11 (with display access for MT5)
+- Python 3.11+ (check version with `python --version`)
+- MetaTrader 5 (installed and configured)
+- Git
+- Pip 
+
+---
+
+## 📦 Install & Setup
+
+### 1. Clone the Repository
 
 ```bash
-.
-├── main_app.py                 # Tkinter GUI entry point
-├── README.md
-├── .cache/                     # Active working config files
-│   ├── current_config.json
-│   └── current_config.ini
-├── generated/                  # Saved job folders (1 per run)
-│   └── <timestamp>_<EA>/      # Includes job_config.json, .ini, and results
-│       ├── job_config.json
-│       ├── <symbol>/
-│           ├── .ini files
-│           └── .xml results
-├── reports/                    # Temporary XML export staging area
-├── settings.json               # MT5 terminal config (required)
-│
-├── core/                       # Core logic (job runner, optimizer, state)
-├── ui/                         # Tkinter GUI widgets and layout
-├── report_util/                # XML saving, pathing, file movement
-└── tests/                      # Pytest unit tests
+git clone https://github.com/your-org/optibatch.git
+cd optibatch
+```
+
+### 2. Create and Activate a Virtual Environment
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate       # On Windows
+```
+
+### 3. Install Python Dependencies
+
+```bash
+pip install -r requirements.txt
 ```
 
 ---
 
-## 🚀 How to Run
+## 🖥️ MetaTrader 5 Setup
+
+1. Install MT5 from your broker or [MetaTrader's official site](https://www.metatrader5.com).
+2. Launch MT5 at least once.
+3. Ensure:
+   - Language is set to **English**
+   - The desired EA (`.ex5` file) is compiled and placed in:
+     ```
+     C:\Users\<YourName>\AppData\Roaming\MetaQuotes\Terminal\<HASH>\MQL5\Experts\Shared Projects\<EA Folder>
+     ```
+
+4. Determine the terminal hash by checking:
+   ```
+   %APPDATA%\MetaQuotes\Terminal
+   ```
+
+---
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Set this before running the app:
 
 ```bash
-# Activate your venv
-.venv/Scripts/activate
+set OPTIVIEW_DB_PATH=C:\Path\To\optibatch_results.db
+```
 
-# Launch the GUI
+Alternatively, create a `.env` file:
+
+```env
+OPTIVIEW_DB_PATH=C:\Path\To\optibatch_results.db
+```
+
+---
+
+## 🚀 Running OptiBatch
+
+Start the main UI:
+
+```bash
 python main_app.py
 ```
 
----
-
-## 🔁 Continue a Previous Job
-
-1. Click **"⏭️ Continue Previous"**
-2. Select a `generated/<job_folder>` that contains `job_config.json`
-3. Optibatch will:
-   - Use the job's existing `.ini` files
-   - Skip symbols with already-exported `.xml` results
-   - Export only what's missing
+From there, you can:
+- Load `.ini` configurations
+- Select symbols from `symbols.txt`
+- Run backtests
+- Ingest results into the database
 
 ---
 
-## 🧪 Testing
+## 🗂️ Project Structure
 
-```bash
-pytest
+```
+optibatch/
+├── core/               # Main automation logic
+├── database/           # SQLite interaction and ingestion
+├── ui/                 # Tkinter UI elements
+├── reports/            # Saved MT5 XML outputs
+├── generated/          # Job outputs, including INI + XML
+├── .cache/             # Per-user runtime state (ignored in Git)
+├── requirements.txt    # Dependency list
+└── main_app.py         # App entry point
 ```
 
 ---
 
-## 🛠 Requirements
+## 🧼 Good to Know
 
-- Python 3.11+
-- MT5 installed and configured in `settings.json`
-- Dependencies: `psutil`, `pyautogui`, `pytest`, `mypy`, etc.
-
----
-
-## 📌 Notes
-
-- `.xml` reports are saved to `reports/` first, then moved to the job folder
-- Jobs are organized into folders like `generated/20250411_163229_IndyTSL`
-- INI files are saved in UTF-16 (as required by MT5)
-- All paths are dynamically constructed using `pathlib`
+- `.cache/` is local state and should **not** be committed.
+- You can re-run partial months like April and delete/reingest as needed.
+- Cursor position is restored after automation (or will be soon).
+- OptiBatch uses `pyautogui` to control MT5 – keep the screen unlocked and RDP open.
+- Default XML viewer should be **Notepad** for easy automation cleanup.
 
 ---
 
-## 🧠 Roadmap
+## 🧪 Optional: Dev Notes
 
-- [ ] CLI mode for batch job scripting
-- [ ] Visual dashboard for result tracking
-- [ ] Advanced retry/resume logic
-- [ ] Cloud execution or agent support
+- All Python code should be **mypy compliant**
+- Use `utf-16` for all `.xml` read/write
+- Avoid `except Exception:` — always catch specific exceptions
+
+---
+
+## 🔍 Troubleshooting
+
+- **MT5 doesn't launch properly?**
+  - Check your EA path
+  - Make sure `terminal64.exe` is specified correctly
+
+- **XML file doesn’t close?**
+  - Set default app for `.xml` to Notepad
+  - OptiBatch can auto-close Notepad
+
+- **Backtests not starting?**
+  - Check `.ini` for valid symbol, timeframe, EA path
 
 ---
 
-## 👤 Author
+## 🙋 Support
 
-Built by **512jay** for Dharmesh and others automating MT5 strategies.
-```
-
----
+None, lol.
