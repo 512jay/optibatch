@@ -16,7 +16,6 @@ def export_min_vol_symbols(output_path: Path = Path("min_vol_0.01_symbols.csv"))
     Returns:
         int: Number of symbols written.
     """
-    # Initialize MT5 connection
     if not mt5.initialize():
         print(f"❌ MT5 initialization failed: {mt5.last_error()}")
         return 0
@@ -44,8 +43,11 @@ def export_min_vol_symbols(output_path: Path = Path("min_vol_0.01_symbols.csv"))
         mt5.shutdown()
 
 
-def list_min_vol_symbols() -> int:
+def list_min_vol_symbols(csv_format: bool = False) -> int:
     """Prints all symbols with min volume = 0.01 to stdout.
+
+    Args:
+        csv_format (bool): If True, print symbols as comma-separated list.
 
     Returns:
         int: Number of symbols printed.
@@ -61,8 +63,11 @@ def list_min_vol_symbols() -> int:
             return 0
 
         filtered = [s.name for s in all_symbols if s.volume_min == 0.01]
-        for name in sorted(filtered):
-            print(name)
+        if csv_format:
+            print(",".join(sorted(filtered)))
+        else:
+            for name in sorted(filtered):
+                print(name)
 
         return len(filtered)
     finally:
@@ -79,6 +84,11 @@ if __name__ == "__main__":
         help="Only list matching symbols, do not write CSV",
     )
     parser.add_argument(
+        "--csv",
+        action="store_true",
+        help="Print as comma-separated list (used with --list-only)",
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         default=Path("min_vol_0.01_symbols.csv"),
@@ -87,7 +97,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.list_only:
-        count = list_min_vol_symbols()
+        count = list_min_vol_symbols(csv_format=args.csv)
         print(f"\n✅ Listed {count} symbols with volume_min = 0.01")
     else:
         export_min_vol_symbols(output_path=args.output)
