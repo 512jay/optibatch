@@ -315,17 +315,49 @@ def ingest_single_xml(
     preloaded_job: Job | None = None,
     collect_only: bool = False,
 ) -> list[Run] | int:
-
     """
-    Ingest a single MT5 XML result file and commit all runs to the database.
+    Ingest a single MT5 XML result file and optionally commit runs to the database.
 
-    - If no session is passed, creates one automatically.
-    - Calculates derived metrics: expected_payoff, recovery_factor, custom_score
+    This function:
+    - Extracts metadata and run details from a single XML file.
+    - Converts inputs using config typing info.
+    - Computes derived metrics (custom_score, recovery_factor, etc.).
+    - Deduplicates runs using a generated result_hash.
+    - If any valid runs are found (trades > 0), adds the symbol to valid_symbols.csv.
+
+    Args:
+        xml_path (Path): Path to the XML result file.
+        config_path (Path): Path to the corresponding .json or .ini config.
+        session (Session | None): Optional SQLAlchemy session. If not provided, one will be created.
+        job_id (str): Unique job ID.
+        preloaded_job (Job | None): Optional Job instance to attach runs to if `collect_only` is True.
+        collect_only (bool): If True, returns a list of Run objects without committing.
+
+    Returns:
+        list[Run] | int: If `collect_only` is True, returns list of parsed Run objects.
+                         Otherwise, returns the count of runs successfully committed.
     """
+
+    def write_symbol_csv(symbols: set[str], job_id: str) -> None:
+        """Append unique valid symbols to a job-local CSV file."""
+        output_path = Path(f"generated/{job_id}/valid_symbols.csv")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        existing = set()
+
+        if output_path.exists():
+            existing.update(output_path.read_text().splitlines()[1:])  # skip header
+
+        all_symbols = sorted(existing.union(symbols))
+        with output_path.open("w", newline="") as f:
+            f.write("symbol\n")
+            for s in all_symbols:
+                f.write(f"{s}\n")
+
     added_runs: list[Run] = []
     owns_session = session is None
     engine = get_engine() if owns_session else None
     session = session or get_session(engine).__enter__()
+    valid_symbols: set[str] = set()
 
     try:
         job_meta = extract_job_metadata(config_path)
@@ -334,21 +366,23 @@ def ingest_single_xml(
         )
         raw_runs = extract_runs_from_xml(xml_path)
         skipped_zero_trades = 0
+        duplicate_count = 0
         total = 0
 
-        duplicate_count = 0
         for record in raw_runs:
             trades = int(record.get("Trades", 0))
             if trades == 0:
                 skipped_zero_trades += 1
                 continue
 
+            # Record this symbol as valid if any pass had > 0 trades
+            valid_symbols.add(symbol)
 
+            # Parse input types
             if config_path.name.endswith(".json"):
                 input_type_map = parse_input_types_from_json(config_path)
             else:
                 input_type_map = parse_input_types_from_ini(config_path)
-
 
             inputs = {}
             for k, v in record.items():
@@ -368,6 +402,7 @@ def ingest_single_xml(
                 except Exception:
                     inputs[k] = val
 
+            # Extract performance metrics
             profit = float(record.get("Profit", 0))
             drawdown_str = record.get("Equity DD %", "0").replace("%", "").strip()
             drawdown = float(drawdown_str) if drawdown_str else 0.0
@@ -396,25 +431,27 @@ def ingest_single_xml(
                 profit_factor=profit_factor,
                 custom_score=custom_score,
                 params_json=inputs,
-                result_hash = generate_result_hash(
+                result_hash=generate_result_hash(
                     symbol=symbol,
                     modeling_mode=job_meta["model"],
                     start_date=start_date,
                     end_date=end_date,
                     inputs=inputs,
                     strategy_version=job_meta["strategy_version"],
-                    summary={"profit": profit, "drawdown": drawdown, "trades": trades}
+                    summary={"profit": profit, "drawdown": drawdown, "trades": trades},
                 ),
-
                 created_at=datetime.utcnow(),
             )
 
+            # Check for duplicates
             if session.query(Run).filter_by(result_hash=run.result_hash).first():
                 duplicate_count += 1
                 if duplicate_count <= 5:
                     logger.debug(f"🛑 Duplicate run skipped: {run.result_hash}")
                 elif duplicate_count == 6:
-                    logger.debug("🛑 ...more duplicates detected, suppressing further duplicate logs.")
+                    logger.debug(
+                        "🛑 ...more duplicates detected, suppressing further duplicate logs."
+                    )
                 continue
 
             if collect_only:
@@ -427,9 +464,12 @@ def ingest_single_xml(
 
         if owns_session:
             if skipped_zero_trades:
-                logger.info(f"📭 Skipped {skipped_zero_trades} runs with 0 trades in {xml_path.name}")
+                logger.info(
+                    f"📭 Skipped {skipped_zero_trades} runs with 0 trades in {xml_path.name}"
+                )
             session.commit()
             logger.info(f"💾 Committed {total} runs from {xml_path.name}")
+
     finally:
         if owns_session:
             session.close()
@@ -437,7 +477,7 @@ def ingest_single_xml(
     if duplicate_count > 0:
         logger.info(f"🧹 Skipped {duplicate_count} duplicate runs in {xml_path.name}")
 
-    if collect_only:
-        return added_runs
-    else:
-        return total
+    if valid_symbols:
+        write_symbol_csv(valid_symbols, job_id)
+
+    return added_runs if collect_only else total
